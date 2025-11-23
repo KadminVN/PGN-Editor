@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Master PGN Generator</title>
+    <link rel="icon" type="image/png" href="web icon.png"/>
+    <link rel="stylesheet" href="style.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="main-layout">
+        
+        <aside class="sidebar">
+            
+            <div class="sidebar-section">
+                <h3>Match Details</h3>
+                <div class="input-group">
+                    <label>Date</label>
+                    <div class="multi-input-row">
+                        <input type="number" id="date-dd" placeholder="DD" min="1" max="31">
+                        <input type="number" id="date-mm" placeholder="MM" min="1" max="12">
+                        <input type="number" id="date-yyyy" placeholder="YYYY" min="1900" max="2100">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Event / Site</label>
+                    <input type="text" id="match-event" placeholder="Event Name">
+                    <input type="text" id="match-site" placeholder="Site Location" style="margin-top:5px;">
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Black Player</h3>
+                <div class="multi-input-row">
+                    <select id="black-title" class="title-select">
+                        <option value="">-</option>
+                        <option value="GM">GM</option>
+                        <option value="IM">IM</option>
+                        <option value="FM">FM</option>
+                        <option value="CM">CM</option>
+                        <option value="NM">NM</option>
+                        <option value="WGM">WGM</option>
+                        <option value="WIM">WIM</option>
+                        <option value="WFM">WFM</option>
+                        <option value="WCM">WCM</option>
+                    </select>
+                    <input type="text" id="black-name" placeholder="Name" value="Black">
+                </div>
+                <div class="multi-input-row">
+                    <input type="number" id="black-elo" placeholder="Elo" value="">
+                    <input type="number" id="black-country" placeholder="Flag ID (0-245)">
+                </div>
+                <div class="input-group avatar-group">
+                    <label>Avatar Filename</label>
+                    <div class="url-prefix-container">
+                        <span class="url-prefix">.../v1/user/</span>
+                        <input type="text" id="black-avatar" placeholder="image.png">
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>White Player</h3>
+                <div class="multi-input-row">
+                    <select id="white-title" class="title-select">
+                        <option value="">-</option>
+                        <option value="GM">GM</option>
+                        <option value="IM">IM</option>
+                        <option value="FM">FM</option>
+                        <option value="CM">CM</option>
+                        <option value="NM">NM</option>
+                        <option value="WGM">WGM</option>
+                        <option value="WIM">WIM</option>
+                        <option value="WFM">WFM</option>
+                        <option value="WCM">WCM</option>
+                    </select>
+                    <input type="text" id="white-name" placeholder="Name" value="White">
+                </div>
+                <div class="multi-input-row">
+                    <input type="number" id="white-elo" placeholder="Elo" value="">
+                    <input type="number" id="white-country" placeholder="Flag ID (0-245)">
+                </div>
+                <div class="input-group avatar-group">
+                    <label>Avatar Filename</label>
+                    <div class="url-prefix-container">
+                        <span class="url-prefix">.../v1/user/</span>
+                        <input type="text" id="white-avatar" placeholder="image.png">
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
+        <main class="container" id="game-container">
+            
+            <div class="player-section top-player" id="player-black-display">
+                <div class="player-avatar-container">
+                    <img src="https://www.chess.com/bundles/web/images/noavatar_l.84a92436.gif" id="img-black" class="p-avatar" alt="">
+                    <div class="player-details">
+                        <div class="row-1">
+                            <span id="disp-black-title" class="p-title"></span>
+                            <span id="disp-black-name" class="p-name">Black</span>
+                        </div>
+                        <div class="row-2">
+                            <span class="p-elo" id="disp-black-elo"></span>
+                            <span class="p-flag" id="disp-black-flag"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="timer-container"><div id="timer-black">10:00</div></div>
+            </div>
+    
+            <div class="status" id="status">White's turn to move</div>
+    
+            <div class="board-shell">
+                <div class="ranks ranks-left"><span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span></div>
+                <div class="files files-top"><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span></div>
+                <div class="chessboard" id="chessboard"></div>
+                <div class="files files-bottom"><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span></div>
+                <div class="ranks ranks-right"><span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span></div>
+            </div>
+    
+            <div class="player-section bottom-player" id="player-white-display">
+                <div class="player-avatar-container">
+                    <img src="https://www.chess.com/bundles/web/images/noavatar_l.84a92436.gif" id="img-white" class="p-avatar" alt="">
+                    <div class="player-details">
+                        <div class="row-1">
+                            <span id="disp-white-title" class="p-title"></span>
+                            <span id="disp-white-name" class="p-name">White</span>
+                        </div>
+                        <div class="row-2">
+                            <span class="p-elo" id="disp-white-elo"></span>
+                            <span class="p-flag" id="disp-white-flag"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="timer-container"><div id="timer-white">10:00</div></div>
+            </div>
+
+            <div class="controls">
+                <button id="generate-pgn">Generate PGN</button>
+                <button id="new-game">New Game</button>
+                <button id="undo-move" title="Undo">Undo</button>
+                <button id="redo-move" title="Redo">Redo</button> 
+                <button id="flip-board">Flip Board</button>
+            </div>
+
+            <div class="annotation-panel">
+                <h4>Annotate Last Move</h4>
+                <div class="annotation-grid">
+                    <button class="anno-btn brilliant" data-type="Brilliant" title="Brilliant (!!)"><i class="fas fa-gem"></i> !!</button>
+                    <button class="anno-btn great" data-type="GreatFind" title="Great Find ($)"><i class="fas fa-star"></i> !</button>
+                    <button class="anno-btn best" data-type="BestMove" title="Best Move"><i class="fas fa-check"></i> Best</button>
+                    <button class="anno-btn excellent" data-type="Excellent" title="Excellent"><i class="fas fa-thumbs-up"></i> Exc</button>
+                    <button class="anno-btn good" data-type="Good" title="Good (!)"><i class="fas fa-check-circle"></i> Good</button>
+                    <button class="anno-btn book" data-type="Book" title="Book Move"><i class="fas fa-book"></i> Book</button>
+                    <button class="anno-btn inaccuracy" data-type="Inaccuracy" title="Inaccuracy (?!)">?!</button>
+                    <button class="anno-btn mistake" data-type="Mistake" title="Mistake (?)">?</button>
+                    <button class="anno-btn miss" data-type="Miss" title="Miss">Miss</button>
+                    <button class="anno-btn blunder" data-type="Blunder" title="Blunder (??)">??</button>
+                </div>
+            </div>
+
+            <div class="move-history">
+                <h3>Move History</h3>
+                <div id="move-list"></div>
+            </div>
+
+        </main>
+    </div>
+
+    <svg width="0" height="0" style="position:absolute;left:-9999px;top:-9999px;">
+        <defs>
+            <marker id="arrowhead-g" markerWidth="4" markerHeight="4"
+                    refX="2" refY="2" orient="auto">
+                <path d="M0,0 L4,2 L0,4" fill="rgba(155, 199, 0, 0.8)" />
+            </marker>
+        </defs>
+    </svg>
+
+    <div class="promotion-modal" id="promotion-modal">
+        <div class="promotion-content">
+            <div class="promotion-title">Choose promotion piece</div>
+            <div class="promotion-options">
+                <div class="promotion-piece" data-piece="queen"></div>
+                <div class="promotion-piece" data-piece="rook"></div>
+                <div class="promotion-piece" data-piece="bishop"></div>
+                <div class="promotion-piece" data-piece="knight"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="pgn-modal" id="pgn-modal">
+        <div class="pgn-content">
+            <div class="pgn-title">Game PGN</div>
+            <textarea id="pgn-text" readonly></textarea>
+            <div class="pgn-buttons">
+                <button id="copy-pgn">Copy PGN</button>
+                <button id="download-pgn">Download</button> 
+                <button id="close-pgn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="chess.js"></script>
+</body>
+</html>
