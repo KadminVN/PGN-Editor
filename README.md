@@ -104,6 +104,7 @@ The generator produces professional PGN files with:
 [Termination ""]
 
 1. e4 {[%c_effect e4;square;e4;type;Good;persistent;true]} e5 2. Nf3 $1 Nc6 $2
+```
 
 ## 📸 Preview
 
