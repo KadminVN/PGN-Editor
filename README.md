@@ -1,55 +1,109 @@
-# ♟️ Advanced Chess Game
+# ♟️ Master PGN Generator
 
-A browser-based chess game built with **HTML**, **CSS**, and **JavaScript**.  
-Features include full move validation, drag & drop piece movement, en passant, castling, pawn promotion, move history, board flipping, and annotation tools (right-click highlights & arrows).
+A professional web-based PGN (Portable Game Notation) generator for chess games. Create and export perfectly formatted PGN files with comprehensive game metadata and annotations.
 
----
+## ✨ Features
 
-## 🚀 Features
+### 📝 PGN Generation
+- **Complete PGN Headers**: Event, Site, Date, Round, Player info, Result, and more
+- **Chess.com Compatible**: Generates PGNs with proper formatting for chess.com analysis
+- **Move Annotations**: Support for NAG (Numeric Annotation Glyphs) and text annotations
+- **Export Options**: Copy to clipboard or download as .pgn file
 
-- ✅ Standard chess rules:
-  - Legal move generation
-  - Castling
-  - En passant
-  - Pawn promotion
-- ✅ Interactive UI:
-  - Click-to-move **or** drag-and-drop
-  - Right-click to highlight squares
-  - Right-click drag to draw/remove arrows
-- ✅ Move history with **algebraic notation**
-- ✅ Visual indicators:
-  - Valid moves
-  - Captures
-  - Check & checkmate
-- ✅ Flip the board
-- ✅ Undo last move
-- ✅ Styled with a custom **Minecraft font** & modern CSS
+### 🏆 Annotation System
+- **Comprehensive Move Analysis**:
+  - ❌ Blunder (??), Mistake (?), Inaccuracy (?!)
+  - ✅ Good (!), Excellent, Best Move, Great Find (!), Brilliant (!!)
+  - 📚 Book moves, Interesting moves (!?)
+  - 👁️ Missed opportunities
 
----
+### 🎮 Interactive Chess Board
+- **Visual Move Input**: Click or drag pieces to input moves
+- **Move Validation**: Ensures legal chess moves only
+- **Visual Feedback**: Highlights valid moves, captures, and checks
+- **Analysis Tools**: Right-click to draw arrows and highlight squares
 
-## 🛠️ Setup
+### 👥 Player Management
+- **Professional Profiles**: Player names, titles (GM, IM, FM, etc.), Elo ratings
+- **Country Flags**: Support for international player representation
+- **Avatar URLs**: Chess.com compatible avatar links
+- **Custom Metadata**: Event names, locations, dates
 
-1. Clone or download this repository.
-2. Ensure you have the `chess pieces/` folder with piece images:
-   - `wp.png`, `bp.png`, `wn.png`, `bn.png`, `wb.png`, `bb.png`, `wr.png`, `br.png`, `wq.png`, `bq.png`, `wk.png`, `bk.png`
-3. Open `index.html` in a browser.
+### 💾 Export Options
+- **Copy to Clipboard**: One-click PGN copying
+- **File Download**: Direct .pgn file download
+- **Full Headers**: Complete PGN metadata for professional use
 
-No build tools required — it’s pure vanilla HTML/CSS/JS.
+## 🚀 Quick Start
 
----
+1. **Download all files**:
+   - `index.html`
+   - `style.css`
+   - `chess.js`
+   - `fonts/minecraft.ttf` (optional)
+   - `sounds/` directory
+   - `chess pieces/` directory
 
-## 🎮 Controls
+2. **Open `index.html`** in your web browser
 
-- **Left click** → Select a piece, then click a highlighted square to move.
-- **Drag & drop** → Hold a piece and move it to a valid square.
-- **Right click** → Highlight/unhighlight a square.
-- **Right click + drag** → Draw/remove arrows.
-- **Buttons**:
-  - 🆕 **New Game** → Reset the board
-  - ↩️ **Undo Move** → Take back the last move
-  - 🔄 **Flip Board** → Rotate the board 180°
+3. **Set up game information** in the sidebar:
+   - Match details (date, event, site)
+   - Player information (names, titles, Elo, flags, avatars)
 
----
+4. **Input the game moves** using the chess board
+
+5. **Annotate moves** using the annotation panel
+
+6. **Generate PGN** and export via copy or download
+
+## 🎯 Usage Guide
+
+### Setting Up Players
+- **Titles**: Select from GM, IM, FM, CM, NM, WGM, WIM, WFM, WCM
+- **Elo Ratings**: Input numerical ratings
+- **Country Flags**: Use numeric flag IDs (0-245)
+- **Avatars**: Paste full chess.com avatar URLs
+
+### Inputting Moves
+- Click a piece then click destination square
+- Or drag pieces directly to target squares
+- Promotion automatically triggers piece selection
+- Castling, en passant, and all special moves supported
+
+### Annotating the Game
+- Use the annotation buttons after each move
+- Right-click and drag to draw analysis arrows
+- Right-click squares to highlight important positions
+- Annotations appear in both move history and final PGN
+
+### Generating PGN
+- Click "Generate PGN" to view the complete notation
+- Use "Copy PGN" to copy to clipboard
+- Use "Download" to save as .pgn file
+
+## 📋 PGN Output Format
+
+The generator produces professional PGN files with:
+
+```pgn
+[Event "Event Name"]
+[Site "Site Location"] 
+[Date "2024.01.15"]
+[Round "?"]
+[White "Player Name"]
+[Black "Opponent Name"]
+[Result "*"]
+[WhiteTitle "GM"]
+[BlackTitle "IM"]
+[WhiteElo "2650"]
+[BlackElo "2520"]
+[WhiteCountry "1"]
+[BlackCountry "2"]
+[WhiteUrl "avatar_url"]
+[BlackUrl "avatar_url"]
+[Termination ""]
+
+1. e4 {[%c_effect e4;square;e4;type;Good;persistent;true]} e5 2. Nf3 $1 Nc6 $2
 
 ## 📸 Preview
 

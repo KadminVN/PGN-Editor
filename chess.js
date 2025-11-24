@@ -86,80 +86,97 @@ class ChessGame {
  
 	// ========== INPUT & SETTINGS ==========
 	initInputs() {
-	    if(document.getElementById('date-dd')) {
-		   const [yyyy, mm, dd] = this.pgnHeaders.Date.split('.');
-		   document.getElementById('date-dd').value = dd;
-		   document.getElementById('date-mm').value = mm;
-		   document.getElementById('date-yyyy').value = yyyy;
-	    }
- 
-	    const bindInput = (id, headerKey) => {
-		   const el = document.getElementById(id);
-		   if(el) el.addEventListener('input', (e) => {
-			  this.pgnHeaders[headerKey] = e.target.value;
-			  this.updatePlayerHeaders();
-		   });
-	    };
- 
-	    bindInput('match-event', 'Event');
-	    bindInput('match-site', 'Site');
-	    bindInput('white-name', 'White');
-	    bindInput('black-name', 'Black');
-	    bindInput('white-elo', 'WhiteElo');
-	    bindInput('black-elo', 'BlackElo');
-	    bindInput('white-title', 'WhiteTitle');
-	    bindInput('black-title', 'BlackTitle');
-	    bindInput('white-country', 'WhiteCountry');
-	    bindInput('black-country', 'BlackCountry');
- 
-	    ['date-dd', 'date-mm', 'date-yyyy'].forEach(id => {
-		   const el = document.getElementById(id);
-		   if(el) el.addEventListener('input', () => {
-			  const d = (document.getElementById('date-dd').value || '??').padStart(2,'0');
-			  const m = (document.getElementById('date-mm').value || '??').padStart(2,'0');
-			  const y = document.getElementById('date-yyyy').value || '????';
-			  this.pgnHeaders.Date = `${y}.${m}.${d}`;
-		   });
-	    });
- 
-	    const avatarPrefix = "https://images.chesscomfiles.com/uploads/v1/user/";
-	    ['white', 'black'].forEach(color => {
-		   const el = document.getElementById(`${color}-avatar`);
-		   if(el) el.addEventListener('input', (e) => {
-			  const val = e.target.value;
-			  this.pgnHeaders[`${color.charAt(0).toUpperCase() + color.slice(1)}Url`] = val ? avatarPrefix + val : "";
-			  this.updatePlayerHeaders();
-		   });
-	    });
-	}
+		if(document.getElementById('date-dd')) {
+		    const [yyyy, mm, dd] = this.pgnHeaders.Date.split('.');
+		    document.getElementById('date-dd').value = dd;
+		    document.getElementById('date-mm').value = mm;
+		    document.getElementById('date-yyyy').value = yyyy;
+		}
+	 
+		const bindInput = (id, headerKey) => {
+		    const el = document.getElementById(id);
+		    if(el) el.addEventListener('input', (e) => {
+			   this.pgnHeaders[headerKey] = e.target.value;
+			   this.updatePlayerHeaders();
+		    });
+		};
+	 
+		bindInput('match-event', 'Event');
+		bindInput('match-site', 'Site');
+		bindInput('white-name', 'White');
+		bindInput('black-name', 'Black');
+		bindInput('white-elo', 'WhiteElo');
+		bindInput('black-elo', 'BlackElo');
+		bindInput('white-title', 'WhiteTitle');
+		bindInput('black-title', 'BlackTitle');
+		bindInput('white-country', 'WhiteCountry');
+		bindInput('black-country', 'BlackCountry');
+		
+		// Add event listeners for direct player name inputs
+		const bindNameInput = (id, headerKey) => {
+		    const el = document.getElementById(id);
+		    if(el) el.addEventListener('input', (e) => {
+			   this.pgnHeaders[headerKey] = e.target.value;
+			   // Also update the sidebar input for consistency
+			   const sidebarEl = document.getElementById(headerKey.toLowerCase() + '-name');
+			   if(sidebarEl) sidebarEl.value = e.target.value;
+		    });
+		};
+	 
+		bindNameInput('disp-white-name', 'White');
+		bindNameInput('disp-black-name', 'Black');
+	 
+		['date-dd', 'date-mm', 'date-yyyy'].forEach(id => {
+		    const el = document.getElementById(id);
+		    if(el) el.addEventListener('input', () => {
+			   const d = (document.getElementById('date-dd').value || '??').padStart(2,'0');
+			   const m = (document.getElementById('date-mm').value || '??').padStart(2,'0');
+			   const y = document.getElementById('date-yyyy').value || '????';
+			   this.pgnHeaders.Date = `${y}.${m}.${d}`;
+		    });
+		});
+	 
+		// Simple avatar URL handling - users type full URL
+		['white', 'black'].forEach(color => {
+		const el = document.getElementById(`${color}-avatar`);
+		if(el) el.addEventListener('input', (e) => {
+			this.pgnHeaders[`${color.charAt(0).toUpperCase() + color.slice(1)}Url`] = e.target.value || "";
+			this.updatePlayerHeaders();
+		});
+		});
+	 }
  
 	updatePlayerHeaders() {
-	    const updateSide = (color) => {
-		   const cap = color.charAt(0).toUpperCase() + color.slice(1);
-		   const nameEl = document.getElementById(`disp-${color}-name`);
-		   if(nameEl) nameEl.textContent = this.pgnHeaders[cap] || cap;
-		   
-		   const title = this.pgnHeaders[`${cap}Title`];
-		   const titleEl = document.getElementById(`disp-${color}-title`);
-		   if(titleEl) {
-			  titleEl.textContent = title;
-			  titleEl.style.display = title ? 'inline-block' : 'none';
-		   }
- 
-		   const elo = this.pgnHeaders[`${cap}Elo`];
-		   const flag = this.pgnHeaders[`${cap}Country`];
-		   const eloEl = document.getElementById(`disp-${color}-elo`);
-		   if(eloEl) eloEl.textContent = elo ? `(${elo})` : '';
-		   const flagEl = document.getElementById(`disp-${color}-flag`);
-		   if(flagEl) flagEl.textContent = flag ? ` 🏳️${flag}` : '';
- 
-		   const url = this.pgnHeaders[`${cap}Url`];
-		   const imgEl = document.getElementById(`img-${color}`);
-		   if(imgEl) imgEl.src = url || "https://www.chess.com/bundles/web/images/noavatar_l.84a92436.gif";
-	    };
-	    updateSide('white');
-	    updateSide('black');
-	}
+		const updateSide = (color) => {
+		    const cap = color.charAt(0).toUpperCase() + color.slice(1);
+		    
+		    // Update display name input
+		    const nameInputEl = document.getElementById(`disp-${color}-name`);
+		    if(nameInputEl && nameInputEl.value !== this.pgnHeaders[cap]) {
+			   nameInputEl.value = this.pgnHeaders[cap] || cap;
+		    }
+		    
+		    const title = this.pgnHeaders[`${cap}Title`];
+		    const titleEl = document.getElementById(`disp-${color}-title`);
+		    if(titleEl) {
+			   titleEl.textContent = title;
+			   titleEl.style.display = title ? 'inline-block' : 'none';
+		    }
+	 
+		    const elo = this.pgnHeaders[`${cap}Elo`];
+		    const flag = this.pgnHeaders[`${cap}Country`];
+		    const eloEl = document.getElementById(`disp-${color}-elo`);
+		    if(eloEl) eloEl.textContent = elo ? `(${elo})` : '';
+		    const flagEl = document.getElementById(`disp-${color}-flag`);
+		    if(flagEl) flagEl.textContent = flag ? ` 🏳️${flag}` : '';
+	 
+		    const url = this.pgnHeaders[`${cap}Url`];
+		    const imgEl = document.getElementById(`img-${color}`);
+		    if(imgEl) imgEl.src = url || "https://www.chess.com/bundles/web/images/noavatar_l.84a92436.gif";
+		};
+		updateSide('white');
+		updateSide('black');
+	 }
  
 	// ========== AUDIO & STYLES ==========
 	injectCustomStyles() {
@@ -276,7 +293,7 @@ class ChessGame {
 		    const p = this.board[row][col];
 		    sq.innerHTML = '';
 		    
-		    // Clear ALL visual classes first
+		    // Clear ALL visual classes first - ADD THE MISSING CLASSES
 		    sq.classList.remove('selected', 'valid-move', 'valid-capture', 'in-check', 'castle-move', 'right-click-highlight');
 		    
 		    // Then add back what's needed
@@ -453,19 +470,36 @@ class ChessGame {
 	}
  
 	handleMouseUp(e, r, c) {
-	    if(e.button===2 && this.arrowDragStart) {
-		   const to = this.getLogicalPos(r,c);
-		   const from = this.arrowDragStart;
-		   if(from.row===to.row && from.col===to.col) {
-			  const k = `${from.row},${from.col}`;
-			  this.rightClickHighlights.has(k) ? this.rightClickHighlights.delete(k) : this.rightClickHighlights.add(k);
-		   } else {
-			  this.arrows.push({from, to});
-		   }
-		   this.arrowDragStart=null; 
-		   this.updateDisplay();
-	    }
-	}
+		if(e.button===2 && this.arrowDragStart) {
+		    const to = this.getLogicalPos(r,c);
+		    const from = this.arrowDragStart;
+		    
+		    if(from.row===to.row && from.col===to.col) {
+			   // Right-click on same square - toggle highlight
+			   const k = `${from.row},${from.col}`;
+			   this.rightClickHighlights.has(k) ? this.rightClickHighlights.delete(k) : this.rightClickHighlights.add(k);
+		    } else {
+			   // Check if this arrow already exists
+			   const existingArrowIndex = this.arrows.findIndex(arrow => 
+				  arrow.from.row === from.row && 
+				  arrow.from.col === from.col && 
+				  arrow.to.row === to.row && 
+				  arrow.to.col === to.col
+			   );
+			   
+			   if (existingArrowIndex !== -1) {
+				  // Remove existing arrow
+				  this.arrows.splice(existingArrowIndex, 1);
+			   } else {
+				  // Add new arrow
+				  this.arrows.push({from, to});
+			   }
+		    }
+		    
+		    this.arrowDragStart=null; 
+		    this.updateDisplay();
+		}
+	 }
  
 	selectPiece(r, c) { 
 	    this.selectedPiece={row:r,col:c}; 
@@ -797,6 +831,9 @@ class ChessGame {
 	finalizeMove(cap, isCastle) {
 		this.switchPlayer();
 		
+		// Clear selection after move
+		this.clearSelection();
+		
 		// Update display BEFORE checking for check/mate
 		this.updateDisplay();
 		
@@ -933,45 +970,52 @@ class ChessGame {
 	}
  
 	attachEventListeners() {
-	    document.getElementById('flip-board').addEventListener('click', () => {
-		   this.isFlipped = !this.isFlipped;
-		   this.updateDisplay();
-		   this.updateCoordinates();
-	    });
-	    
-	    document.getElementById('new-game').addEventListener('click', () => this.setupGame());
-	    document.getElementById('generate-pgn').addEventListener('click', () => this.showPgnModal());
-	    document.getElementById('close-pgn').addEventListener('click', () => document.getElementById('pgn-modal').style.display='none');
-	    
-	    document.querySelectorAll('.anno-btn').forEach(btn => {
-		   btn.addEventListener('click', () => this.annotateLastMove(btn.dataset.type));
-	    });
-	    
-	    document.getElementById('copy-pgn').addEventListener('click', () => {
-		   const t = document.getElementById('pgn-text'); t.select(); navigator.clipboard.writeText(t.value);
-	    });
-	    
-	    document.getElementById('download-pgn').addEventListener('click', () => {
-		   const blob = new Blob([this.generatePGN()], { type: 'text/plain' });
-		   const url = window.URL.createObjectURL(blob);
-		   const a = document.createElement('a');
-		   a.href = url; a.download = 'master_game.pgn'; a.click();
-	    });
-	    
-	    document.querySelectorAll('.promotion-piece').forEach(btn => btn.addEventListener('click', () => this.selectPromotion(btn.dataset.piece)));
-	    
-	    document.addEventListener('keydown', (e) => {
-		   if(e.key==='ArrowLeft') { this.undoMove(); }
-		   if(e.key==='ArrowRight') { this.redoMove(); }
-	    });
-	}
+		document.getElementById('flip-board').addEventListener('click', () => {
+		    this.isFlipped = !this.isFlipped;
+		    this.updateDisplay();
+		    this.updateCoordinates();
+		});
+		
+		document.getElementById('new-game').addEventListener('click', () => this.setupGame());
+		document.getElementById('generate-pgn').addEventListener('click', () => this.showPgnModal());
+		document.getElementById('close-pgn').addEventListener('click', () => document.getElementById('pgn-modal').style.display='none');
+		
+		// Add undo/redo button listeners
+		document.getElementById('undo-move').addEventListener('click', () => this.undoMove());
+		document.getElementById('redo-move').addEventListener('click', () => this.redoMove());
+		
+		document.querySelectorAll('.anno-btn').forEach(btn => {
+		    btn.addEventListener('click', () => this.annotateLastMove(btn.dataset.type));
+		});
+		
+		document.getElementById('copy-pgn').addEventListener('click', () => {
+		    const t = document.getElementById('pgn-text'); t.select(); navigator.clipboard.writeText(t.value);
+		});
+		
+		document.getElementById('download-pgn').addEventListener('click', () => {
+		    const blob = new Blob([this.generatePGN()], { type: 'text/plain' });
+		    const url = window.URL.createObjectURL(blob);
+		    const a = document.createElement('a');
+		    a.href = url; a.download = 'master_game.pgn'; a.click();
+		});
+		
+		document.querySelectorAll('.promotion-piece').forEach(btn => btn.addEventListener('click', () => this.selectPromotion(btn.dataset.piece)));
+		
+		document.addEventListener('keydown', (e) => {
+		    if(e.key==='ArrowLeft') { this.undoMove(); }
+		    if(e.key==='ArrowRight') { this.redoMove(); }
+		});
+	 }
  
-	// ========== UNDO/REDO ==========
-	undoMove() { 
+	 // ========== UNDO/REDO ==========
+	 undoMove() { 
 		if(this.moveHistory.length === 0) return;
 		const m = this.moveHistory.pop();
 		this.redoStack.push(m);
-  
+	  
+		// Play appropriate sound based on move type
+		this.playMoveSound(m, true);
+	  
 		// 1. Revert the piece to the starting square
 		this.board[m.from.row][m.from.col] = {type: m.piece, color: m.player};
 		
@@ -988,9 +1032,8 @@ class ChessGame {
 		} else {
 		    this.board[m.to.row][m.to.col] = null;
 		}
-  
+	  
 		// 3. Revert Castling (Move the Rook back)
-		// We detect a castle if the King moved more than 1 square sideways
 		if (m.piece === 'king' && Math.abs(m.from.col - m.to.col) > 1) {
 		    const row = m.from.row;
 		    const isKingside = m.to.col > m.from.col;
@@ -1001,7 +1044,7 @@ class ChessGame {
 		    this.board[row][rookFrom] = this.board[row][rookTo];
 		    this.board[row][rookTo] = null;
 		}
-  
+	  
 		// 4. Restore State
 		this.castlingRights = m.prevCastling;
 		this.enPassantTarget = m.prevEP;
@@ -1010,16 +1053,20 @@ class ChessGame {
 		
 		this.updateDisplay(); 
 		this.updateMoveHistory();
-	 }
-	 redoMove() { 
+	  }
+	  
+	  redoMove() { 
 		if(this.redoStack.length === 0) return;
 		const m = this.redoStack.pop();
 		this.moveHistory.push(m);
-  
+	  
+		// Play appropriate sound based on move type
+		this.playMoveSound(m, false);
+	  
 		// 1. Move the piece
 		this.board[m.to.row][m.to.col] = {type: m.piece, color: m.player};
 		this.board[m.from.row][m.from.col] = null;
-  
+	  
 		// 2. Handle Castling Redo (Move Rook)
 		if (m.piece === 'king' && Math.abs(m.from.col - m.to.col) > 1) {
 		    const row = m.from.row;
@@ -1030,16 +1077,13 @@ class ChessGame {
 		    this.board[row][rookTo] = this.board[row][rookFrom];
 		    this.board[row][rookFrom] = null;
 		}
-  
+	  
 		// 3. Handle En Passant Redo (Remove the captured pawn)
 		if (m.isEnPassant) {
 		    this.board[m.from.row][m.to.col] = null;
 		}
-  
+	  
 		// 4. Update State
-		// We generally rely on the game logic to update rights/ep, 
-		// but for redo we can re-apply the state stored in the NEXT move if we had it, 
-		// or just recalculate. Recalculating rights is safer:
 		const p = this.board[m.to.row][m.to.col];
 		this.updateCastlingRights(p, m.from.row, m.from.col);
 		
@@ -1049,10 +1093,76 @@ class ChessGame {
 		} else {
 		    this.enPassantTarget = null;
 		}
-  
+	  
 		this.currentPlayer = m.player === 'white' ? 'black' : 'white';
 		this.updateDisplay(); 
 		this.updateMoveHistory();
+	  }
+	  // Add this method to check if a move resulted in check
+	  wasMoveCheck(move) {
+		 // Temporarily restore the board state to check if this move resulted in check
+		 const originalBoard = JSON.parse(JSON.stringify(this.board));
+		 const originalCurrentPlayer = this.currentPlayer;
+		 
+		 // Apply the move temporarily
+		 this.board[move.to.row][move.to.col] = {type: move.piece, color: move.player};
+		 this.board[move.from.row][move.from.col] = null;
+		 
+		 // Handle captures for en passant
+		 if (move.isEnPassant) {
+			this.board[move.from.row][move.to.col] = null;
+		 }
+		 
+		 // Handle castling - move the rook
+		 if (move.piece === 'king' && Math.abs(move.from.col - move.to.col) > 1) {
+			const row = move.from.row;
+			const isKingside = move.to.col > move.from.col;
+			const rookFrom = isKingside ? 7 : 0;
+			const rookTo = isKingside ? 5 : 3;
+			
+			this.board[row][rookTo] = this.board[row][rookFrom];
+			this.board[row][rookFrom] = null;
+		 }
+		 
+		 // Check if this move put the opponent in check
+		 const opponent = move.player === 'white' ? 'black' : 'white';
+		 const kingPos = this.findKing(opponent);
+		 const wasCheck = kingPos ? this.isSquareAttacked(kingPos.row, kingPos.col, move.player) : false;
+		 
+		 // Restore original state
+		 this.board = originalBoard;
+		 this.currentPlayer = originalCurrentPlayer;
+		 
+		 return wasCheck;
+	  }
+	 // ========== SOUND HELPER FOR UNDO/REDO ==========
+	 playMoveSound(move, isUndo) {
+		const movedColor = move.player;
+		const opponentColor = movedColor === 'white' ? 'black' : 'white';
+		
+		let soundType = 'move'; // default
+		
+		if (move.piece === 'king' && Math.abs(move.from.col - move.to.col) > 1) {
+		    // Castling move
+		    soundType = 'castle';
+		} else if (move.captured || move.isEnPassant) {
+		    // Capture move (including en passant)
+		    soundType = 'capture';
+		} else if (move.promotion) {
+		    // Promotion move
+		    soundType = 'promote';
+		}
+		
+		// Check if this move resulted in check
+		if (this.wasMoveCheck(move)) {
+		    soundType = 'check';
+		}
+		
+		// For undo, we play the sound as if the opponent is making the reverse move
+		// For redo, we play the sound as the original player making the move
+		const colorToUse = isUndo ? opponentColor : movedColor;
+		
+		this.playSound(`${colorToUse}-${soundType}`);
 	 }
  
 	drawArrows() {

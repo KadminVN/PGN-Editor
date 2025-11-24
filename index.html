@@ -53,14 +53,11 @@
                     <input type="number" id="black-country" placeholder="Flag ID (0-245)">
                 </div>
                 <div class="input-group avatar-group">
-                    <label>Avatar Filename</label>
-                    <div class="url-prefix-container">
-                        <span class="url-prefix">.../v1/user/</span>
-                        <input type="text" id="black-avatar" placeholder="image.png">
-                    </div>
+                    <label>Avatar URL</label>
+                    <input type="text" id="black-avatar" placeholder="https://images.chesscomfiles.com/uploads/v1/user/filename.webp" class="url-input-with-hint">
                 </div>
             </div>
-
+            
             <div class="sidebar-section">
                 <h3>White Player</h3>
                 <div class="multi-input-row">
@@ -83,11 +80,8 @@
                     <input type="number" id="white-country" placeholder="Flag ID (0-245)">
                 </div>
                 <div class="input-group avatar-group">
-                    <label>Avatar Filename</label>
-                    <div class="url-prefix-container">
-                        <span class="url-prefix">.../v1/user/</span>
-                        <input type="text" id="white-avatar" placeholder="image.png">
-                    </div>
+                    <label>Avatar URL</label>
+                    <input type="text" id="white-avatar" placeholder="https://images.chesscomfiles.com/uploads/v1/user/filename.webp" class="url-input-with-hint">
                 </div>
             </div>
 
@@ -101,7 +95,7 @@
                     <div class="player-details">
                         <div class="row-1">
                             <span id="disp-black-title" class="p-title"></span>
-                            <span id="disp-black-name" class="p-name">Black</span>
+                            <input type="text" id="disp-black-name" class="p-name-input" value="Black">
                         </div>
                         <div class="row-2">
                             <span class="p-elo" id="disp-black-elo"></span>
@@ -109,10 +103,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="timer-container"><div id="timer-black">10:00</div></div>
             </div>
-    
-            <div class="status" id="status">White's turn to move</div>
     
             <div class="board-shell">
                 <div class="ranks ranks-left"><span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span></div>
@@ -128,7 +119,7 @@
                     <div class="player-details">
                         <div class="row-1">
                             <span id="disp-white-title" class="p-title"></span>
-                            <span id="disp-white-name" class="p-name">White</span>
+                            <input type="text" id="disp-white-name" class="p-name-input" value="White">
                         </div>
                         <div class="row-2">
                             <span class="p-elo" id="disp-white-elo"></span>
@@ -136,32 +127,37 @@
                         </div>
                     </div>
                 </div>
-                <div class="timer-container"><div id="timer-white">10:00</div></div>
             </div>
 
             <div class="controls">
                 <button id="generate-pgn">Generate PGN</button>
-                <button id="new-game">New Game</button>
+                <button id="new-game">Reset</button>
                 <button id="undo-move" title="Undo">Undo</button>
                 <button id="redo-move" title="Redo">Redo</button> 
                 <button id="flip-board">Flip Board</button>
             </div>
 
-            <div class="annotation-panel">
-                <h4>Annotate Last Move</h4>
-                <div class="annotation-grid">
-                    <button class="anno-btn brilliant" data-type="Brilliant" title="Brilliant (!!)"><i class="fas fa-gem"></i> !!</button>
-                    <button class="anno-btn great" data-type="GreatFind" title="Great Find ($)"><i class="fas fa-star"></i> !</button>
-                    <button class="anno-btn best" data-type="BestMove" title="Best Move"><i class="fas fa-check"></i> Best</button>
-                    <button class="anno-btn excellent" data-type="Excellent" title="Excellent"><i class="fas fa-thumbs-up"></i> Exc</button>
-                    <button class="anno-btn good" data-type="Good" title="Good (!)"><i class="fas fa-check-circle"></i> Good</button>
-                    <button class="anno-btn book" data-type="Book" title="Book Move"><i class="fas fa-book"></i> Book</button>
-                    <button class="anno-btn inaccuracy" data-type="Inaccuracy" title="Inaccuracy (?!)">?!</button>
-                    <button class="anno-btn mistake" data-type="Mistake" title="Mistake (?)">?</button>
-                    <button class="anno-btn miss" data-type="Miss" title="Miss">Miss</button>
-                    <button class="anno-btn blunder" data-type="Blunder" title="Blunder (??)">??</button>
-                </div>
-            </div>
+            <!-- Remove this entire status line -->
+<!-- <div class="status" id="status">White's turn to move</div> -->
+
+<!-- Update the annotation panel -->
+<div class="annotation-panel">
+    <h4>Annotate Last Move</h4>
+    <div class="annotation-grid">
+        <button class="anno-btn none" data-type="None" title="None (□) $9"><i class="fas fa-eye-slash"></i> None</button>
+        <button class="anno-btn book" data-type="Book" title="Book Move"><i class="fas fa-book"></i> Book</button>
+        <button class="anno-btn blunder" data-type="Blunder" title="Blunder (??) $4"><span class="symbol">??</span> Blunder</button>
+        <button class="anno-btn miss" data-type="Miss" title="Miss"><i class="fas fa-times"></i> Miss</button>
+        <button class="anno-btn mistake" data-type="Mistake" title="Mistake (?) $2"><span class="symbol">?</span> Mistake</button>
+        <button class="anno-btn inaccuracy" data-type="Inaccuracy" title="Inaccuracy (?!) $6"><span class="symbol">?!</span> Inaccuracy</button>
+        <button class="anno-btn interesting" data-type="Interesting" title="Interesting (!?) $5"><span class="symbol">!?</span> Interesting</button>
+        <button class="anno-btn good" data-type="Good" title="Good (!) $1"><span class="fas fa-check"></span> Good</button>
+        <button class="anno-btn excellent" data-type="Excellent" title="Excellent"><i class="fas fa-thumbs-up"></i> Excellent</button>
+        <button class="anno-btn best" data-type="BestMove" title="Best Move"><i class="fas fa-star"></i> Best</button>
+        <button class="anno-btn great" data-type="GreatFind" title="Great Find (!) $1"><span class="symbol">!</span> Great</button>
+        <button class="anno-btn brilliant" data-type="Brilliant" title="Brilliant (!!) $3"><span class="symbol">!!</span> Brilliant</button>
+    </div>
+</div>
 
             <div class="move-history">
                 <h3>Move History</h3>
@@ -175,7 +171,7 @@
         <defs>
             <marker id="arrowhead-g" markerWidth="4" markerHeight="4"
                     refX="2" refY="2" orient="auto">
-                <path d="M0,0 L4,2 L0,4" fill="rgba(155, 199, 0, 0.8)" />
+                <path d="M0,0 L4,2 L0,4" fill="rgba(0, 0, 0, 0.6)" />
             </marker>
         </defs>
     </svg>
@@ -197,9 +193,18 @@
             <div class="pgn-title">Game PGN</div>
             <textarea id="pgn-text" readonly></textarea>
             <div class="pgn-buttons">
-                <button id="copy-pgn">Copy PGN</button>
-                <button id="download-pgn">Download</button> 
-                <button id="close-pgn">Close</button>
+                <button id="copy-pgn">
+                    <i class="fas fa-copy"></i>
+                    Copy PGN
+                </button>
+                <button id="download-pgn">
+                    <i class="fas fa-download"></i>
+                    Download
+                </button>
+                <button id="close-pgn">
+                    <i class="fas fa-times"></i>
+                    Close
+                </button>
             </div>
         </div>
     </div>
