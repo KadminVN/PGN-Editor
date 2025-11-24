@@ -107,8 +107,7 @@ The generator produces professional PGN files with:
 ```
 
 ## 📸 Preview
-
-_Add a screenshot here (e.g., `preview.png`) showing the board in action._
+<img width="672" height="371" alt="image_2025-11-24_163117547-removebg-preview" src="https://github.com/user-attachments/assets/17fc0df2-03e3-4f0c-b482-ca6ed5f87dd6" />
 
 ---
 
