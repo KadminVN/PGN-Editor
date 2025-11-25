@@ -30,7 +30,7 @@ class ChessGame {
 	    this.sounds = {};
 	    this.audioUnlocked = false;
  
-	    // Notation icons mapping
+	    // Simplified notation system - only one active notation
 	    this.notationIcons = {
 		   'Brilliant': 'notation icons/brilliant.png',
 		   'GreatFind': 'notation icons/great.png', 
@@ -46,8 +46,9 @@ class ChessGame {
 		   'None': null
 	    };
 	    
-	    // Track annotations by square (for the intersection positions)
-	    this.squareAnnotations = new Map(); // key: "row,col", value: annotation type
+	    // Track only the current move's annotation
+	    this.currentMoveAnnotation = null;
+	    this.currentMoveSquare = null; // {row, col} of the move being annotated
  
 	    // PGN Headers
 	    const now = new Date();
@@ -80,31 +81,32 @@ class ChessGame {
 	}
  
 	setupGame() {
-	    this.currentPlayer = 'white';
-	    this.moveHistory = [];
-	    this.redoStack = [];
-	    this.gameOver = false;
-	    this.rightClickHighlights.clear();
-	    this.arrows = [];
-	    this.selectedPiece = null;
-	    this.validMoves = [];
-	    this.castlingRights = {
-		   white: { kingside: true, queenside: true },
-		   black: { kingside: true, queenside: true }
-	    };
-	    this.enPassantTarget = null;
-	    
-	    // Clear all annotations
-	    this.squareAnnotations.clear();
- 
-	    this.createBoard();
-	    this.setupPieces();
-	    this.updateDisplay();
-	    this.updateCoordinates();
-	    this.updatePlayerHeaders();
-	    
-	    setTimeout(() => this.playSound('start'), 500);
-	}
+		this.currentPlayer = 'white';
+		this.moveHistory = [];
+		this.redoStack = [];
+		this.gameOver = false;
+		this.rightClickHighlights.clear();
+		this.arrows = [];
+		this.selectedPiece = null;
+		this.validMoves = [];
+		this.castlingRights = {
+		    white: { kingside: true, queenside: true },
+		    black: { kingside: true, queenside: true }
+		};
+		this.enPassantTarget = null;
+		
+		// Clear current annotation
+		this.currentMoveAnnotation = null;
+		this.currentMoveSquare = null;
+	 
+		this.createBoard();
+		this.setupPieces();
+		this.updateDisplay();
+		this.updateCoordinates();
+		this.updatePlayerHeaders();
+		
+		setTimeout(() => this.playSound('start'), 500);
+	 }
  
 	// ========== INPUT & SETTINGS ==========
 	initInputs() {
@@ -330,7 +332,7 @@ class ChessGame {
 	    this.updatePlayerStates();
 	    this.updateStatus();
 	    this.drawArrows();
-	    this.drawNotationIcons();
+	    this.drawNotationIcon();
 	}
  
 	updateBoardSquares() {
@@ -364,42 +366,44 @@ class ChessGame {
 	    });
 	 }
  
-	 drawNotationIcons() {
-		// Clear existing notation icons
+	// Simplified - only draw one notation icon
+	drawNotationIcon() {
+		// Clear existing notation icon
 		this.notationLayer.innerHTML = '';
 		
-		// Draw notation icons at intersections (top-right of each square)
-		this.squareAnnotations.forEach((annotationType, key) => {
-		    const [row, col] = key.split(',').map(Number);
-		    const iconPath = this.notationIcons[annotationType];
+		// Only draw if we have an active annotation and move square
+		if (this.currentMoveAnnotation && this.currentMoveSquare && this.currentMoveAnnotation !== 'None') {
+		    const iconPath = this.notationIcons[this.currentMoveAnnotation];
+		    const { row, col } = this.currentMoveSquare;
 		    
 		    if (iconPath) {
 			   const icon = document.createElement('img');
 			   icon.src = iconPath;
 			   icon.className = 'notation-icon';
-			   icon.alt = annotationType;
+			   icon.alt = this.currentMoveAnnotation;
 			   
-			   // Position at the intersection (top-right corner between squares)
+			   // Correct positioning logic for both orientations
 			   const squareSize = 100 / 8; // 12.5% of board
 			   
 			   let xPos, yPos;
 			   if (this.isFlipped) {
-				  // When flipped: position at top-right intersection
+				  // When flipped: position at top-right intersection (from black's perspective)
 				  xPos = (7 - col) * squareSize + squareSize;
 				  yPos = (7 - row) * squareSize;
 			   } else {
-				  // Normal orientation: position at top-right intersection  
-				  xPos = (col + 1) * squareSize;
-				  yPos = (8 - row) * squareSize; // Fixed: was (7 - row), should be (8 - row)
+				  // Normal orientation: position at top-right intersection (from white's perspective)
+				  xPos = col * squareSize + squareSize;
+				  yPos = row * squareSize;
 			   }
 			   
-			   // Position at the intersection point
+			   // Position at the intersection point with proper centering
 			   icon.style.left = `${xPos}%`;
 			   icon.style.top = `${yPos}%`;
+			   icon.style.transform = 'translate(-50%, -50%)';
 			   
 			   this.notationLayer.appendChild(icon);
 		    }
-		});
+		}
 	 }
  
 	updateSelectionAndMoves() {
@@ -511,31 +515,26 @@ class ChessGame {
 	}
  
 	annotateLastMove(type) {
-	    if(this.moveHistory.length === 0) return;
-	    const last = this.moveHistory[this.moveHistory.length-1];
-	    
-	    // Remove previous annotation from the square if it exists
-	    const prevKey = `${last.to.row},${last.to.col}`;
-	    if (last.annotation && last.annotation !== 'None') {
-		   this.squareAnnotations.delete(prevKey);
-	    }
-	    
-	    // Add new annotation to the square (unless it's "None")
-	    if (type !== 'None') {
-		   this.squareAnnotations.set(prevKey, type);
-		   last.annotation = type;
-		   const nagMap = { 'Brilliant':'$3', 'GreatFind':'$1', 'Good':'$1', 'Inaccuracy':'$6', 'Mistake':'$2', 'Miss':'$2', 'Blunder':'$4' };
-		   last.nag = nagMap[type] || '';
-	    } else {
-		   // Clear annotation
-		   this.squareAnnotations.delete(prevKey);
-		   last.annotation = null;
-		   last.nag = '';
-	    }
-	    
-	    this.updateDisplay();
-	    this.updateMoveHistory();
-	}
+		if(this.moveHistory.length === 0) return;
+		const last = this.moveHistory[this.moveHistory.length-1];
+		
+		// Update current annotation - clear if "None" is selected
+		if (type === 'None') {
+		    this.currentMoveAnnotation = null;
+		    this.currentMoveSquare = null;
+		} else {
+		    this.currentMoveAnnotation = type;
+		    this.currentMoveSquare = { row: last.to.row, col: last.to.col };
+		}
+		
+		// Also update the move history record
+		last.annotation = type === 'None' ? null : type;
+		const nagMap = { 'Brilliant':'$3', 'GreatFind':'$1', 'Good':'$1', 'Inaccuracy':'$6', 'Mistake':'$2', 'Miss':'$2', 'Blunder':'$4' };
+		last.nag = nagMap[type] || '';
+		
+		this.updateDisplay();
+		this.updateMoveHistory();
+	 }
  
 	// ========== MOUSE & DRAG HANDLING ==========
 	handleSquareClick(e, r, c) {
@@ -612,17 +611,26 @@ class ChessGame {
 	}
  
 	clearSelection() { 
-	    this.selectedPiece=null; 
-	    this.validMoves=[]; 
-	    this.updateDisplay(); 
-	}
+		this.selectedPiece = null; 
+		this.validMoves = []; 
+		this.updateDisplay(); 
+	 }
  
 	clearAllAnnotations() { 
-	    this.rightClickHighlights.clear(); 
-	    this.arrows=[]; 
-	    this.squareAnnotations.clear();
-	    this.updateDisplay(); 
-	}
+		this.rightClickHighlights.clear(); 
+		this.arrows = []; 
+		this.currentMoveAnnotation = null;
+		this.currentMoveSquare = null;
+		
+		// Also clear annotation from the last move if it exists
+		if (this.moveHistory.length > 0) {
+		    const lastMove = this.moveHistory[this.moveHistory.length - 1];
+		    lastMove.annotation = null;
+		    lastMove.nag = '';
+		}
+		
+		this.updateDisplay(); 
+	 }
  
 	// --- DRAG AND DROP LOGIC ---
 	startDrag(e, r, c) {
@@ -892,20 +900,24 @@ class ChessGame {
 	}
  
 	makeMove(fr, fc, tr, tc, move) {
-	    const p = this.board[fr][fc];
-	    this.redoStack = [];
-	    
-	    if(move.isCastle) { this.performCastle(move); return; }
-	    if(move.isEnPassant) { this.performEnPassant(fr, fc, tr, tc); return; }
-	    if(p.type==='pawn' && (tr===0 || tr===7)) { this.showPromotionModal(fr, fc, tr, tc); return; }
- 
-	    const cap = this.board[tr][tc];
-	    this.recordMove(p, fr, fc, tr, tc, cap);
-	    this.board[tr][tc] = p; this.board[fr][fc] = null;
-	    this.updateCastlingRights(p, fr, fc);
-	    this.enPassantTarget = (p.type==='pawn' && Math.abs(fr-tr)===2) ? {row:(fr+tr)/2, col:tc} : null;
-	    this.finalizeMove(cap, false);
-	}
+		const p = this.board[fr][fc];
+		this.redoStack = [];
+		
+		// CLEAR THE CURRENT ANNOTATION WHEN MAKING A NEW MOVE
+		this.currentMoveAnnotation = null;
+		this.currentMoveSquare = null;
+		
+		if(move.isCastle) { this.performCastle(move); return; }
+		if(move.isEnPassant) { this.performEnPassant(fr, fc, tr, tc); return; }
+		if(p.type==='pawn' && (tr===0 || tr===7)) { this.showPromotionModal(fr, fc, tr, tc); return; }
+	 
+		const cap = this.board[tr][tc];
+		this.recordMove(p, fr, fc, tr, tc, cap);
+		this.board[tr][tc] = p; this.board[fr][fc] = null;
+		this.updateCastlingRights(p, fr, fc);
+		this.enPassantTarget = (p.type==='pawn' && Math.abs(fr-tr)===2) ? {row:(fr+tr)/2, col:tc} : null;
+		this.finalizeMove(cap, false);
+	 }
  
 	recordMove(p, fr, fc, tr, tc, cap, isEP=false, promo=null) {
 	    const file = String.fromCharCode(97+fc);
@@ -968,22 +980,30 @@ class ChessGame {
 	switchPlayer() { this.currentPlayer = this.currentPlayer==='white'?'black':'white'; }
 	
 	performCastle(m) {
-	    const c=this.currentPlayer, r=c==='white'?7:0;
-	    this.board[r][m.col]=this.board[r][4]; this.board[r][4]=null;
-	    const rF=m.side==='kingside'?7:0, rT=m.side==='kingside'?5:3;
-	    this.board[r][rT]=this.board[r][rF]; this.board[r][rF]=null;
-	    this.recordMove({type:'king',color:c}, r, 4, r, m.col, null); 
-	    this.moveHistory[this.moveHistory.length-1].notation = m.side==='kingside'?'O-O':'O-O-O';
-	    this.castlingRights[c]={kingside:false, queenside:false};
-	    this.finalizeMove(null, true);
-	}
-	
-	performEnPassant(fr,fc,tr,tc) {
-	    const p=this.board[fr][fc];
-	    this.recordMove(p, fr, fc, tr, tc, this.board[fr][tc], true);
-	    this.board[tr][tc]=p; this.board[fr][fc]=null; this.board[fr][tc]=null;
-	    this.finalizeMove(true, false);
-	}
+		// Clear annotation for new move
+		this.currentMoveAnnotation = null;
+		this.currentMoveSquare = null;
+		
+		const c=this.currentPlayer, r=c==='white'?7:0;
+		this.board[r][m.col]=this.board[r][4]; this.board[r][4]=null;
+		const rF=m.side==='kingside'?7:0, rT=m.side==='kingside'?5:3;
+		this.board[r][rT]=this.board[r][rF]; this.board[r][rF]=null;
+		this.recordMove({type:'king',color:c}, r, 4, r, m.col, null); 
+		this.moveHistory[this.moveHistory.length-1].notation = m.side==='kingside'?'O-O':'O-O-O';
+		this.castlingRights[c]={kingside:false, queenside:false};
+		this.finalizeMove(null, true);
+	 }
+	 
+	 performEnPassant(fr,fc,tr,tc) {
+		// Clear annotation for new move
+		this.currentMoveAnnotation = null;
+		this.currentMoveSquare = null;
+		
+		const p=this.board[fr][fc];
+		this.recordMove(p, fr, fc, tr, tc, this.board[fr][tc], true);
+		this.board[tr][tc]=p; this.board[fr][fc]=null; this.board[fr][tc]=null;
+		this.finalizeMove(true, false);
+	 }
  
 	isInBounds(r,c){ return r>=0 && r<8 && c>=0 && c<8; }
 	
@@ -1061,19 +1081,24 @@ class ChessGame {
 	    document.getElementById('promotion-modal').style.display = 'flex';
 	 }
  
-	selectPromotion(type) {
-	    document.getElementById('promotion-modal').style.display = 'none';
-	    if(!this.pendingPromotion) return;
-	    const {fromRow, fromCol, toRow, toCol} = this.pendingPromotion;
-	    const p = this.board[fromRow][fromCol];
-	    const cap = this.board[toRow][toCol];
-	    this.recordMove(p, fromRow, fromCol, toRow, toCol, cap, false, type);
-	    this.board[toRow][toCol] = {type, color: p.color};
-	    this.board[fromRow][fromCol] = null;
-	    this.updateCastlingRights(p, fromRow, fromCol);
-	    this.finalizeMove(null, false);
-	    this.pendingPromotion = null;
-	    this.playSound('promote');
+	 selectPromotion(type) {
+		document.getElementById('promotion-modal').style.display = 'none';
+		if(!this.pendingPromotion) return;
+		const {fromRow, fromCol, toRow, toCol} = this.pendingPromotion;
+		const p = this.board[fromRow][fromCol];
+		const cap = this.board[toRow][toCol];
+		
+		// Clear annotation for new move
+		this.currentMoveAnnotation = null;
+		this.currentMoveSquare = null;
+		
+		this.recordMove(p, fromRow, fromCol, toRow, toCol, cap, false, type);
+		this.board[toRow][toCol] = {type, color: p.color};
+		this.board[fromRow][fromCol] = null;
+		this.updateCastlingRights(p, fromRow, fromCol);
+		this.finalizeMove(null, false);
+		this.pendingPromotion = null;
+		this.playSound('promote');
 	 }
  
 	// ========== GENERATE MASTER PGN ==========
@@ -1178,67 +1203,80 @@ class ChessGame {
  
 	 // ========== UNDO/REDO ==========
 	 undoMove() { 
-	    if(this.moveHistory.length === 0) return;
-	    const m = this.moveHistory.pop();
-	    this.redoStack.push(m);
-	  
-	    // Remove annotation from the square if it exists
-	    const annotationKey = `${m.to.row},${m.to.col}`;
-	    if (m.annotation && m.annotation !== 'None') {
-		   this.squareAnnotations.delete(annotationKey);
-	    }
-	  
-	    // Play appropriate sound based on move type
-	    this.playMoveSound(m, true);
-	  
-	    // 1. Revert the piece to the starting square
-	    this.board[m.from.row][m.from.col] = {type: m.piece, color: m.player};
-	    
-	    // 2. Handle Captures & En Passant
-	    if(m.captured) {
-		   if(m.isEnPassant) {
-			  this.board[m.to.row][m.to.col] = null; // The destination is empty
-			  // Restore the captured pawn 'behind' the move
-			  this.board[m.from.row][m.to.col] = {type: 'pawn', color: m.player==='white'?'black':'white'};
-		   } else {
-			  // Normal capture restoration
-			  this.board[m.to.row][m.to.col] = {type: m.captured, color: m.player==='white'?'black':'white'};
-		   }
-	    } else {
-		   this.board[m.to.row][m.to.col] = null;
-	    }
-	  
-	    // 3. Revert Castling (Move the Rook back)
-	    if (m.piece === 'king' && Math.abs(m.from.col - m.to.col) > 1) {
-		   const row = m.from.row;
-		   const isKingside = m.to.col > m.from.col;
-		   const rookFrom = isKingside ? 7 : 0;
-		   const rookTo = isKingside ? 5 : 3;
-		   
-		   // Move rook from 'To' back to 'From'
-		   this.board[row][rookFrom] = this.board[row][rookTo];
-		   this.board[row][rookTo] = null;
-	    }
-	  
-	    // 4. Restore State
-	    this.castlingRights = m.prevCastling;
-	    this.enPassantTarget = m.prevEP;
-	    this.currentPlayer = m.player;
-	    this.gameOver = false;
-	    
-	    this.updateDisplay(); 
-	    this.updateMoveHistory();
-	  }
+		if(this.moveHistory.length === 0) return;
+		const m = this.moveHistory.pop();
+		this.redoStack.push(m);
+		
+		// Clear current annotation when undoing
+		this.currentMoveAnnotation = null;
+		this.currentMoveSquare = null;
+		
+		// Check if there's a previous move that should have an annotation
+		if (this.moveHistory.length > 0) {
+		    const previousMove = this.moveHistory[this.moveHistory.length - 1];
+		    if (previousMove.annotation && previousMove.annotation !== 'None') {
+			   this.currentMoveAnnotation = previousMove.annotation;
+			   this.currentMoveSquare = { 
+				  row: previousMove.to.row, 
+				  col: previousMove.to.col 
+			   };
+		    }
+		}
+		
+		// Play appropriate sound based on move type
+		this.playMoveSound(m, true);
+		
+		// 1. Revert the piece to the starting square
+		this.board[m.from.row][m.from.col] = {type: m.piece, color: m.player};
+		
+		// 2. Handle Captures & En Passant
+		if(m.captured) {
+		    if(m.isEnPassant) {
+			   this.board[m.to.row][m.to.col] = null; // The destination is empty
+			   // Restore the captured pawn 'behind' the move
+			   this.board[m.from.row][m.to.col] = {type: 'pawn', color: m.player==='white'?'black':'white'};
+		    } else {
+			   // Normal capture restoration
+			   this.board[m.to.row][m.to.col] = {type: m.captured, color: m.player==='white'?'black':'white'};
+		    }
+		} else {
+		    this.board[m.to.row][m.to.col] = null;
+		}
+		
+		// 3. Revert Castling (Move the Rook back)
+		if (m.piece === 'king' && Math.abs(m.from.col - m.to.col) > 1) {
+		    const row = m.from.row;
+		    const isKingside = m.to.col > m.from.col;
+		    const rookFrom = isKingside ? 7 : 0;
+		    const rookTo = isKingside ? 5 : 3;
+		    
+		    // Move rook from 'To' back to 'From'
+		    this.board[row][rookFrom] = this.board[row][rookTo];
+		    this.board[row][rookTo] = null;
+		}
+		
+		// 4. Restore State
+		this.castlingRights = m.prevCastling;
+		this.enPassantTarget = m.prevEP;
+		this.currentPlayer = m.player;
+		this.gameOver = false;
+		
+		this.updateDisplay(); 
+		this.updateMoveHistory();
+	 }
 	  
 	  redoMove() { 
 	    if(this.redoStack.length === 0) return;
 	    const m = this.redoStack.pop();
 	    this.moveHistory.push(m);
 	  
-	    // Restore annotation to the square if it exists
+	    // Restore annotation if the redone move had one
 	    if (m.annotation && m.annotation !== 'None') {
-		   const annotationKey = `${m.to.row},${m.to.col}`;
-		   this.squareAnnotations.set(annotationKey, m.annotation);
+		   this.currentMoveAnnotation = m.annotation;
+		   this.currentMoveSquare = { row: m.to.row, col: m.to.col };
+	    } else {
+		   this.currentMoveAnnotation = null;
+		   this.currentMoveSquare = null;
 	    }
 	  
 	    // Play appropriate sound based on move type
