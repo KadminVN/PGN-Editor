@@ -30,6 +30,25 @@ class ChessGame {
 	    this.sounds = {};
 	    this.audioUnlocked = false;
  
+	    // Notation icons mapping
+	    this.notationIcons = {
+		   'Brilliant': 'notation icons/brilliant.png',
+		   'GreatFind': 'notation icons/great.png', 
+		   'BestMove': 'notation icons/best.png',
+		   'Excellent': 'notation icons/excellent.png',
+		   'Good': 'notation icons/good.png',
+		   'Book': 'notation icons/book.png',
+		   'Inaccuracy': 'notation icons/inaccuracy.png',
+		   'Interesting': 'notation icons/interesting.png',
+		   'Miss': 'notation icons/miss.png',
+		   'Mistake': 'notation icons/mistake.png',
+		   'Blunder': 'notation icons/blunder.png',
+		   'None': null
+	    };
+	    
+	    // Track annotations by square (for the intersection positions)
+	    this.squareAnnotations = new Map(); // key: "row,col", value: annotation type
+ 
 	    // PGN Headers
 	    const now = new Date();
 	    this.pgnHeaders = {
@@ -74,6 +93,9 @@ class ChessGame {
 		   black: { kingside: true, queenside: true }
 	    };
 	    this.enPassantTarget = null;
+	    
+	    // Clear all annotations
+	    this.squareAnnotations.clear();
  
 	    this.createBoard();
 	    this.setupPieces();
@@ -86,102 +108,121 @@ class ChessGame {
  
 	// ========== INPUT & SETTINGS ==========
 	initInputs() {
-		if(document.getElementById('date-dd')) {
-		    const [yyyy, mm, dd] = this.pgnHeaders.Date.split('.');
-		    document.getElementById('date-dd').value = dd;
-		    document.getElementById('date-mm').value = mm;
-		    document.getElementById('date-yyyy').value = yyyy;
-		}
+	    if(document.getElementById('date-dd')) {
+		   const [yyyy, mm, dd] = this.pgnHeaders.Date.split('.');
+		   document.getElementById('date-dd').value = dd;
+		   document.getElementById('date-mm').value = mm;
+		   document.getElementById('date-yyyy').value = yyyy;
+	    }
 	 
-		const bindInput = (id, headerKey) => {
-		    const el = document.getElementById(id);
-		    if(el) el.addEventListener('input', (e) => {
-			   this.pgnHeaders[headerKey] = e.target.value;
-			   this.updatePlayerHeaders();
-		    });
-		};
+	    const bindInput = (id, headerKey) => {
+		   const el = document.getElementById(id);
+		   if(el) el.addEventListener('input', (e) => {
+			  this.pgnHeaders[headerKey] = e.target.value;
+			  this.updatePlayerHeaders();
+		   });
+	    };
 	 
-		bindInput('match-event', 'Event');
-		bindInput('match-site', 'Site');
-		bindInput('white-name', 'White');
-		bindInput('black-name', 'Black');
-		bindInput('white-elo', 'WhiteElo');
-		bindInput('black-elo', 'BlackElo');
-		bindInput('white-title', 'WhiteTitle');
-		bindInput('black-title', 'BlackTitle');
-		bindInput('white-country', 'WhiteCountry');
-		bindInput('black-country', 'BlackCountry');
-		
-		// Add event listeners for direct player name inputs
-		const bindNameInput = (id, headerKey) => {
-		    const el = document.getElementById(id);
-		    if(el) el.addEventListener('input', (e) => {
-			   this.pgnHeaders[headerKey] = e.target.value;
-			   // Also update the sidebar input for consistency
-			   const sidebarEl = document.getElementById(headerKey.toLowerCase() + '-name');
-			   if(sidebarEl) sidebarEl.value = e.target.value;
-		    });
-		};
+	    bindInput('match-event', 'Event');
+	    bindInput('match-site', 'Site');
+	    bindInput('white-name', 'White');
+	    bindInput('black-name', 'Black');
+	    bindInput('white-elo', 'WhiteElo');
+	    bindInput('black-elo', 'BlackElo');
+	    bindInput('white-title', 'WhiteTitle');
+	    bindInput('black-title', 'BlackTitle');
+	    bindInput('white-country', 'WhiteCountry');
+	    bindInput('black-country', 'BlackCountry');
+	    
+	    // Add event listeners for direct player name inputs
+	    const bindNameInput = (id, headerKey) => {
+		   const el = document.getElementById(id);
+		   if(el) el.addEventListener('input', (e) => {
+			  this.pgnHeaders[headerKey] = e.target.value;
+			  // Also update the sidebar input for consistency
+			  const sidebarEl = document.getElementById(headerKey.toLowerCase() + '-name');
+			  if(sidebarEl) sidebarEl.value = e.target.value;
+		   });
+	    };
 	 
-		bindNameInput('disp-white-name', 'White');
-		bindNameInput('disp-black-name', 'Black');
+	    bindNameInput('disp-white-name', 'White');
+	    bindNameInput('disp-black-name', 'Black');
 	 
-		['date-dd', 'date-mm', 'date-yyyy'].forEach(id => {
-		    const el = document.getElementById(id);
-		    if(el) el.addEventListener('input', () => {
-			   const d = (document.getElementById('date-dd').value || '??').padStart(2,'0');
-			   const m = (document.getElementById('date-mm').value || '??').padStart(2,'0');
-			   const y = document.getElementById('date-yyyy').value || '????';
-			   this.pgnHeaders.Date = `${y}.${m}.${d}`;
-		    });
-		});
+	    ['date-dd', 'date-mm', 'date-yyyy'].forEach(id => {
+		   const el = document.getElementById(id);
+		   if(el) el.addEventListener('input', () => {
+			  const d = (document.getElementById('date-dd').value || '??').padStart(2,'0');
+			  const m = (document.getElementById('date-mm').value || '??').padStart(2,'0');
+			  const y = document.getElementById('date-yyyy').value || '????';
+			  this.pgnHeaders.Date = `${y}.${m}.${d}`;
+		   });
+	    });
 	 
-		// Simple avatar URL handling - users type full URL
-		['white', 'black'].forEach(color => {
-		const el = document.getElementById(`${color}-avatar`);
-		if(el) el.addEventListener('input', (e) => {
-			this.pgnHeaders[`${color.charAt(0).toUpperCase() + color.slice(1)}Url`] = e.target.value || "";
-			this.updatePlayerHeaders();
-		});
-		});
+	    // Simple avatar URL handling - users type full URL
+	    ['white', 'black'].forEach(color => {
+	    const el = document.getElementById(`${color}-avatar`);
+	    if(el) el.addEventListener('input', (e) => {
+		   this.pgnHeaders[`${color.charAt(0).toUpperCase() + color.slice(1)}Url`] = e.target.value || "";
+		   this.updatePlayerHeaders();
+	    });
+	    });
 	 }
  
 	updatePlayerHeaders() {
-		const updateSide = (color) => {
-		    const cap = color.charAt(0).toUpperCase() + color.slice(1);
-		    
-		    // Update display name input
-		    const nameInputEl = document.getElementById(`disp-${color}-name`);
-		    if(nameInputEl && nameInputEl.value !== this.pgnHeaders[cap]) {
-			   nameInputEl.value = this.pgnHeaders[cap] || cap;
-		    }
-		    
-		    const title = this.pgnHeaders[`${cap}Title`];
-		    const titleEl = document.getElementById(`disp-${color}-title`);
-		    if(titleEl) {
-			   titleEl.textContent = title;
-			   titleEl.style.display = title ? 'inline-block' : 'none';
-		    }
+	    const updateSide = (color) => {
+		   const cap = color.charAt(0).toUpperCase() + color.slice(1);
+		   
+		   // Update display name input
+		   const nameInputEl = document.getElementById(`disp-${color}-name`);
+		   if(nameInputEl && nameInputEl.value !== this.pgnHeaders[cap]) {
+			  nameInputEl.value = this.pgnHeaders[cap] || cap;
+		   }
+		   
+		   const title = this.pgnHeaders[`${cap}Title`];
+		   const titleEl = document.getElementById(`disp-${color}-title`);
+		   if(titleEl) {
+			  titleEl.textContent = title;
+			  titleEl.style.display = title ? 'inline-block' : 'none';
+		   }
 	 
-		    const elo = this.pgnHeaders[`${cap}Elo`];
-		    const flag = this.pgnHeaders[`${cap}Country`];
-		    const eloEl = document.getElementById(`disp-${color}-elo`);
-		    if(eloEl) eloEl.textContent = elo ? `(${elo})` : '';
-		    const flagEl = document.getElementById(`disp-${color}-flag`);
-		    if(flagEl) flagEl.textContent = flag ? ` 🏳️${flag}` : '';
+		   const elo = this.pgnHeaders[`${cap}Elo`];
+		   const flag = this.pgnHeaders[`${cap}Country`];
+		   const eloEl = document.getElementById(`disp-${color}-elo`);
+		   if(eloEl) eloEl.textContent = elo ? `(${elo})` : '';
+		   const flagEl = document.getElementById(`disp-${color}-flag`);
+		   if(flagEl) flagEl.textContent = flag ? ` 🏳️${flag}` : '';
 	 
-		    const url = this.pgnHeaders[`${cap}Url`];
-		    const imgEl = document.getElementById(`img-${color}`);
-		    if(imgEl) imgEl.src = url || "https://www.chess.com/bundles/web/images/noavatar_l.84a92436.gif";
-		};
-		updateSide('white');
-		updateSide('black');
+		   const url = this.pgnHeaders[`${cap}Url`];
+		   const imgEl = document.getElementById(`img-${color}`);
+		   if(imgEl) imgEl.src = url || "https://www.chess.com/bundles/web/images/noavatar_l.84a92436.gif";
+	    };
+	    updateSide('white');
+	    updateSide('black');
 	 }
  
 	// ========== AUDIO & STYLES ==========
 	injectCustomStyles() {
 	    const style = document.createElement('style');
-	    style.innerHTML = `.arrow-layer { pointer-events: none; z-index: 90; }`;
+	    style.innerHTML = `
+		   .arrow-layer { pointer-events: none; z-index: 90; }
+		   .notation-icon-layer {
+			  position: absolute;
+			  top: 0;
+			  left: 0;
+			  width: 100%;
+			  height: 100%;
+			  pointer-events: none;
+			  z-index: 25;
+		   }
+		   .notation-icon {
+			  position: absolute;
+			  width: 20px;
+			  height: 20px;
+			  pointer-events: none;
+			  z-index: 26;
+			  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.7));
+		   }
+	    `;
 	    document.head.appendChild(style);
 	}
  
@@ -230,6 +271,12 @@ class ChessGame {
 	    const board = document.getElementById('chessboard');
 	    if(!board) return;
 	    board.innerHTML = '';
+	    
+	    // Create notation icon layer
+	    this.notationLayer = document.createElement('div');
+	    this.notationLayer.className = 'notation-icon-layer';
+	    board.appendChild(this.notationLayer);
+	    
 	    const svgNS = "http://www.w3.org/2000/svg";
 	    this.svgLayer = document.createElementNS(svgNS, "svg");
 	    this.svgLayer.setAttribute("class", "arrow-layer");
@@ -283,85 +330,124 @@ class ChessGame {
 	    this.updatePlayerStates();
 	    this.updateStatus();
 	    this.drawArrows();
+	    this.drawNotationIcons();
 	}
  
 	updateBoardSquares() {
-		document.querySelectorAll('.square').forEach(sq => {
-		    const vr = parseInt(sq.dataset.row);
-		    const vc = parseInt(sq.dataset.col);
-		    const {row, col} = this.getLogicalPos(vr, vc);
-		    const p = this.board[row][col];
-		    sq.innerHTML = '';
+	    document.querySelectorAll('.square').forEach(sq => {
+		   const vr = parseInt(sq.dataset.row);
+		   const vc = parseInt(sq.dataset.col);
+		   const {row, col} = this.getLogicalPos(vr, vc);
+		   const p = this.board[row][col];
+		   sq.innerHTML = '';
+		   
+		   // Clear ALL visual classes first
+		   sq.classList.remove('selected', 'valid-move', 'valid-capture', 'in-check', 'castle-move', 'right-click-highlight');
+		   
+		   // Then add back what's needed
+		   if(this.rightClickHighlights.has(`${row},${col}`)) {
+			  sq.classList.add('right-click-highlight');
+		   }
+		   
+		   if(p) {
+			  const img = document.createElement('img');
+			  img.src = this.getPieceImage(p.type, p.color);
+			  
+			  if (this.draggedPiece && 
+				 this.dragOrigin && 
+				 this.dragOrigin.row === row && 
+				 this.dragOrigin.col === col) {
+				 img.classList.add('drag-hide');
+			  }
+			  sq.appendChild(img);
+		   }
+	    });
+	 }
+ 
+	 drawNotationIcons() {
+		// Clear existing notation icons
+		this.notationLayer.innerHTML = '';
+		
+		// Draw notation icons at intersections (top-right of each square)
+		this.squareAnnotations.forEach((annotationType, key) => {
+		    const [row, col] = key.split(',').map(Number);
+		    const iconPath = this.notationIcons[annotationType];
 		    
-		    // Clear ALL visual classes first - ADD THE MISSING CLASSES
-		    sq.classList.remove('selected', 'valid-move', 'valid-capture', 'in-check', 'castle-move', 'right-click-highlight');
-		    
-		    // Then add back what's needed
-		    if(this.rightClickHighlights.has(`${row},${col}`)) {
-			   sq.classList.add('right-click-highlight');
-		    }
-		    
-		    if(p) {
-			   const img = document.createElement('img');
-			   img.src = this.getPieceImage(p.type, p.color);
+		    if (iconPath) {
+			   const icon = document.createElement('img');
+			   icon.src = iconPath;
+			   icon.className = 'notation-icon';
+			   icon.alt = annotationType;
 			   
-			   if (this.draggedPiece && 
-				  this.dragOrigin && 
-				  this.dragOrigin.row === row && 
-				  this.dragOrigin.col === col) {
-				  img.classList.add('drag-hide');
+			   // Position at the intersection (top-right corner between squares)
+			   const squareSize = 100 / 8; // 12.5% of board
+			   
+			   let xPos, yPos;
+			   if (this.isFlipped) {
+				  // When flipped: position at top-right intersection
+				  xPos = (7 - col) * squareSize + squareSize;
+				  yPos = (7 - row) * squareSize;
+			   } else {
+				  // Normal orientation: position at top-right intersection  
+				  xPos = (col + 1) * squareSize;
+				  yPos = (8 - row) * squareSize; // Fixed: was (7 - row), should be (8 - row)
 			   }
-			   sq.appendChild(img);
+			   
+			   // Position at the intersection point
+			   icon.style.left = `${xPos}%`;
+			   icon.style.top = `${yPos}%`;
+			   
+			   this.notationLayer.appendChild(icon);
 		    }
 		});
 	 }
  
 	updateSelectionAndMoves() {
-		if(!this.selectedPiece) return;
-		const {row, col} = this.selectedPiece;
-		const getSel = (r,c) => {
-		    let vr=r, vc=c;
-		    if(this.isFlipped) { vr=7-r; vc=7-c; }
-		    return `[data-row="${vr}"][data-col="${vc}"]`;
-		};
-		
-		// Clear ALL move indicators first
-		document.querySelectorAll('.square').forEach(sq => {
-		    sq.classList.remove('valid-move', 'valid-capture', 'castle-move');
-		});
-		
-		// Then add the current selection and valid moves
-		document.querySelector(getSel(row,col))?.classList.add('selected');
-		this.validMoves.forEach(m => {
-		    const t = document.querySelector(getSel(m.row, m.col));
-		    if(t) {
-			   if(m.isCastle) {
-				  t.classList.add('castle-move');
-			   } else if(this.board[m.row][m.col]) {
-				  t.classList.add('valid-capture');
-			   } else {
-				  t.classList.add('valid-move');
-			   }
-		    }
-		});
+	    if(!this.selectedPiece) return;
+	    const {row, col} = this.selectedPiece;
+	    const getSel = (r,c) => {
+		   let vr=r, vc=c;
+		   if(this.isFlipped) { vr=7-r; vc=7-c; }
+		   return `[data-row="${vr}"][data-col="${vc}"]`;
+	    };
+	    
+	    // Clear ALL move indicators first
+	    document.querySelectorAll('.square').forEach(sq => {
+		   sq.classList.remove('valid-move', 'valid-capture', 'castle-move');
+	    });
+	    
+	    // Then add the current selection and valid moves
+	    document.querySelector(getSel(row,col))?.classList.add('selected');
+	    this.validMoves.forEach(m => {
+		   const t = document.querySelector(getSel(m.row, m.col));
+		   if(t) {
+			  if(m.isCastle) {
+				 t.classList.add('castle-move');
+			  } else if(this.board[m.row][m.col]) {
+				 t.classList.add('valid-capture');
+			  } else {
+				 t.classList.add('valid-move');
+			  }
+		   }
+	    });
 	 }
  
 	 updateCheckHighlight() {
-		// Clear ALL check highlights first
-		document.querySelectorAll('.square').forEach(sq => {
-		    sq.classList.remove('in-check');
-		});
-		
-		// Only show check if the king is actually in check
-		const kingPos = this.findKing(this.currentPlayer);
-		if(kingPos && this.isSquareAttacked(kingPos.row, kingPos.col, this.currentPlayer === 'white' ? 'black' : 'white')) {
-		    let vr = kingPos.row, vc = kingPos.col;
-		    if(this.isFlipped) { 
-			   vr = 7 - vr; 
-			   vc = 7 - vc; 
-		    }
-		    document.querySelector(`[data-row="${vr}"][data-col="${vc}"]`)?.classList.add('in-check');
-		}
+	    // Clear ALL check highlights first
+	    document.querySelectorAll('.square').forEach(sq => {
+		   sq.classList.remove('in-check');
+	    });
+	    
+	    // Only show check if the king is actually in check
+	    const kingPos = this.findKing(this.currentPlayer);
+	    if(kingPos && this.isSquareAttacked(kingPos.row, kingPos.col, this.currentPlayer === 'white' ? 'black' : 'white')) {
+		   let vr = kingPos.row, vc = kingPos.col;
+		   if(this.isFlipped) { 
+			  vr = 7 - vr; 
+			  vc = 7 - vc; 
+		   }
+		   document.querySelector(`[data-row="${vr}"][data-col="${vc}"]`)?.classList.add('in-check');
+	    }
 	 }
  
 	updatePlayerStates() {
@@ -427,9 +513,27 @@ class ChessGame {
 	annotateLastMove(type) {
 	    if(this.moveHistory.length === 0) return;
 	    const last = this.moveHistory[this.moveHistory.length-1];
-	    last.annotation = type;
-	    const nagMap = { 'Brilliant':'$3', 'GreatFind':'$1', 'Good':'$1', 'Inaccuracy':'$6', 'Mistake':'$2', 'Miss':'$2', 'Blunder':'$4' };
-	    last.nag = nagMap[type] || '';
+	    
+	    // Remove previous annotation from the square if it exists
+	    const prevKey = `${last.to.row},${last.to.col}`;
+	    if (last.annotation && last.annotation !== 'None') {
+		   this.squareAnnotations.delete(prevKey);
+	    }
+	    
+	    // Add new annotation to the square (unless it's "None")
+	    if (type !== 'None') {
+		   this.squareAnnotations.set(prevKey, type);
+		   last.annotation = type;
+		   const nagMap = { 'Brilliant':'$3', 'GreatFind':'$1', 'Good':'$1', 'Inaccuracy':'$6', 'Mistake':'$2', 'Miss':'$2', 'Blunder':'$4' };
+		   last.nag = nagMap[type] || '';
+	    } else {
+		   // Clear annotation
+		   this.squareAnnotations.delete(prevKey);
+		   last.annotation = null;
+		   last.nag = '';
+	    }
+	    
+	    this.updateDisplay();
 	    this.updateMoveHistory();
 	}
  
@@ -470,35 +574,35 @@ class ChessGame {
 	}
  
 	handleMouseUp(e, r, c) {
-		if(e.button===2 && this.arrowDragStart) {
-		    const to = this.getLogicalPos(r,c);
-		    const from = this.arrowDragStart;
-		    
-		    if(from.row===to.row && from.col===to.col) {
-			   // Right-click on same square - toggle highlight
-			   const k = `${from.row},${from.col}`;
-			   this.rightClickHighlights.has(k) ? this.rightClickHighlights.delete(k) : this.rightClickHighlights.add(k);
-		    } else {
-			   // Check if this arrow already exists
-			   const existingArrowIndex = this.arrows.findIndex(arrow => 
-				  arrow.from.row === from.row && 
-				  arrow.from.col === from.col && 
-				  arrow.to.row === to.row && 
-				  arrow.to.col === to.col
-			   );
-			   
-			   if (existingArrowIndex !== -1) {
-				  // Remove existing arrow
-				  this.arrows.splice(existingArrowIndex, 1);
-			   } else {
-				  // Add new arrow
-				  this.arrows.push({from, to});
-			   }
-		    }
-		    
-		    this.arrowDragStart=null; 
-		    this.updateDisplay();
-		}
+	    if(e.button===2 && this.arrowDragStart) {
+		   const to = this.getLogicalPos(r,c);
+		   const from = this.arrowDragStart;
+		   
+		   if(from.row===to.row && from.col===to.col) {
+			  // Right-click on same square - toggle highlight
+			  const k = `${from.row},${from.col}`;
+			  this.rightClickHighlights.has(k) ? this.rightClickHighlights.delete(k) : this.rightClickHighlights.add(k);
+		   } else {
+			  // Check if this arrow already exists
+			  const existingArrowIndex = this.arrows.findIndex(arrow => 
+				 arrow.from.row === from.row && 
+				 arrow.from.col === from.col && 
+				 arrow.to.row === to.row && 
+				 arrow.to.col === to.col
+			  );
+			  
+			  if (existingArrowIndex !== -1) {
+				 // Remove existing arrow
+				 this.arrows.splice(existingArrowIndex, 1);
+			  } else {
+				 // Add new arrow
+				 this.arrows.push({from, to});
+			  }
+		   }
+		   
+		   this.arrowDragStart=null; 
+		   this.updateDisplay();
+	    }
 	 }
  
 	selectPiece(r, c) { 
@@ -516,6 +620,7 @@ class ChessGame {
 	clearAllAnnotations() { 
 	    this.rightClickHighlights.clear(); 
 	    this.arrows=[]; 
+	    this.squareAnnotations.clear();
 	    this.updateDisplay(); 
 	}
  
@@ -567,51 +672,51 @@ class ChessGame {
 	}
  
 	handleDragEnd(e) {
-		document.removeEventListener('mousemove', this.dragMoveHandler);
-		document.removeEventListener('mouseup', this.dragEndHandler);
+	    document.removeEventListener('mousemove', this.dragMoveHandler);
+	    document.removeEventListener('mouseup', this.dragEndHandler);
 	 
-		if (!this.dragOrigin) return;
+	    if (!this.dragOrigin) return;
 	 
-		const board = document.getElementById('chessboard');
-		const rect = board.getBoundingClientRect();
-		const squareSize = rect.width / 8;
+	    const board = document.getElementById('chessboard');
+	    const rect = board.getBoundingClientRect();
+	    const squareSize = rect.width / 8;
 	 
-		let x = e.clientX - rect.left;
-		let y = e.clientY - rect.top;
+	    let x = e.clientX - rect.left;
+	    let y = e.clientY - rect.top;
 	 
-		if (this.isFlipped) {
-		    x = rect.width - x;
-		    y = rect.height - y;
-		}
+	    if (this.isFlipped) {
+		   x = rect.width - x;
+		   y = rect.height - y;
+	    }
 	 
-		const c = Math.floor(x / squareSize);
-		const r = Math.floor(y / squareSize);
+	    const c = Math.floor(x / squareSize);
+	    const r = Math.floor(y / squareSize);
 	 
-		if (r >= 0 && r < 8 && c >= 0 && c < 8) {
-		    let move = this.validMoves.find(m => m.row === r && m.col === c);
-		    
-		    if (!move && this.board[r][c] && 
-			   this.board[r][c].color === this.board[this.dragOrigin.row][this.dragOrigin.col].color &&
-			   this.board[r][c].type === 'rook') {
-				  const side = c > this.dragOrigin.col ? 'kingside' : 'queenside';
-				  move = this.validMoves.find(m => m.isCastle && m.side === side);
-		    }
+	    if (r >= 0 && r < 8 && c >= 0 && c < 8) {
+		   let move = this.validMoves.find(m => m.row === r && m.col === c);
+		   
+		   if (!move && this.board[r][c] && 
+			  this.board[r][c].color === this.board[this.dragOrigin.row][this.dragOrigin.col].color &&
+			  this.board[r][c].type === 'rook') {
+				   const side = c > this.dragOrigin.col ? 'kingside' : 'queenside';
+				   move = this.validMoves.find(m => m.isCastle && m.side === side);
+		   }
 	 
-		    if (move) {
-			   this.makeMove(this.dragOrigin.row, this.dragOrigin.col, r, c, move);
-		    } else {
-			   // Clear selection if move is invalid
-			   this.clearSelection();
-		    }
-		} else {
-		    // Clear selection if dropped outside board
-		    this.clearSelection();
-		}
+		   if (move) {
+			  this.makeMove(this.dragOrigin.row, this.dragOrigin.col, r, c, move);
+		   } else {
+			  // Clear selection if move is invalid
+			  this.clearSelection();
+		   }
+	    } else {
+		   // Clear selection if dropped outside board
+		   this.clearSelection();
+	    }
 	 
-		if (this.dragGhost) this.dragGhost.remove();
-		this.dragGhost = null;
-		this.dragOrigin = null;
-		this.draggedPiece = null;
+	    if (this.dragGhost) this.dragGhost.remove();
+	    this.dragGhost = null;
+	    this.dragOrigin = null;
+	    this.draggedPiece = null;
 	 }
  
 	// ========== GAME LOGIC (CORRECTED) ==========
@@ -679,10 +784,10 @@ class ChessGame {
 	}
  
 	isCheck() {
-		const kingPos = this.findKing(this.currentPlayer);
-		if(!kingPos) return false;
-		const opponent = this.currentPlayer === 'white' ? 'black' : 'white';
-		return this.isSquareAttacked(kingPos.row, kingPos.col, opponent);
+	    const kingPos = this.findKing(this.currentPlayer);
+	    if(!kingPos) return false;
+	    const opponent = this.currentPlayer === 'white' ? 'black' : 'white';
+	    return this.isSquareAttacked(kingPos.row, kingPos.col, opponent);
 	 }
  
 	calculateValidMoves(r, c) {
@@ -829,34 +934,34 @@ class ChessGame {
 	}
  
 	finalizeMove(cap, isCastle) {
-		this.switchPlayer();
-		
-		// Clear selection after move
-		this.clearSelection();
-		
-		// Update display BEFORE checking for check/mate
-		this.updateDisplay();
-		
-		const chk = this.isCheck();
-		const mate = this.checkGameOver();
-		const last = this.moveHistory[this.moveHistory.length-1];
-		
-		let s = 'move';
-		if(isCastle) s = 'castle';
-		else if(cap) s = 'capture';
-		
-		if(chk) {
-		    s = 'check';
-		    if(last) last.notation += '+';
-		}
-		if(mate) {
-		    if(last) last.notation = last.notation.replace('+','') + '#';
-		    setTimeout(()=>this.playSound('game-over'), 0);
-		} else {
-		    const movedColor = this.currentPlayer==='white'?'black':'white';
-		    this.playSound(`${movedColor}-${s}`);
-		}
-		this.updateMoveHistory();
+	    this.switchPlayer();
+	    
+	    // Clear selection after move
+	    this.clearSelection();
+	    
+	    // Update display BEFORE checking for check/mate
+	    this.updateDisplay();
+	    
+	    const chk = this.isCheck();
+	    const mate = this.checkGameOver();
+	    const last = this.moveHistory[this.moveHistory.length-1];
+	    
+	    let s = 'move';
+	    if(isCastle) s = 'castle';
+	    else if(cap) s = 'capture';
+	    
+	    if(chk) {
+		   s = 'check';
+		   if(last) last.notation += '+';
+	    }
+	    if(mate) {
+		   if(last) last.notation = last.notation.replace('+','') + '#';
+		   setTimeout(()=>this.playSound('game-over'), 0);
+	    } else {
+		   const movedColor = this.currentPlayer==='white'?'black':'white';
+		   this.playSound(`${movedColor}-${s}`);
+	    }
+	    this.updateMoveHistory();
 	 }
  
 	// ========== LOGIC HELPERS ==========
@@ -903,9 +1008,26 @@ class ChessGame {
 			  }
 		   }
 	    }
+	    
 	    this.gameOver = true;
+	    
+	    // Set the game result in PGN headers
+	    const kingPos = this.findKing(this.currentPlayer);
+	    const inCheck = kingPos && this.isSquareAttacked(kingPos.row, kingPos.col, 
+		   this.currentPlayer === 'white' ? 'black' : 'white');
+	    
+	    if (inCheck) {
+		   // Checkmate
+		   this.pgnHeaders.Result = this.currentPlayer === 'white' ? '0-1' : '1-0';
+		   this.pgnHeaders.Termination = "Checkmate";
+	    } else {
+		   // Stalemate
+		   this.pgnHeaders.Result = '1/2-1/2';
+		   this.pgnHeaders.Termination = "Stalemate";
+	    }
+	    
 	    return true;
-	}
+	 }
 	
 	updateCastlingRights(p,r,c) {
 	    if(p.type==='king') this.castlingRights[p.color]={kingside:false,queenside:false};
@@ -917,8 +1039,27 @@ class ChessGame {
  
 	showPromotionModal(fr, fc, tr, tc) {
 	    this.pendingPromotion = { fromRow:fr, fromCol:fc, toRow:tr, toCol:tc };
+	    
+	    const promotingColor = this.board[fr][fc].color;
+	    const pieceMap = {
+		   white: { queen: 'wq', rook: 'wr', bishop: 'wb', knight: 'wn' },
+		   black: { queen: 'bq', rook: 'br', bishop: 'bb', knight: 'bn' }
+	    };
+	    
+	    const pieces = pieceMap[promotingColor];
+	    
+	    document.querySelectorAll('.promotion-piece').forEach(pieceEl => {
+		   const pieceType = pieceEl.dataset.piece;
+		   pieceEl.innerHTML = ''; // Clear any existing content
+		   
+		   const img = document.createElement('img');
+		   img.src = `chess pieces/${pieces[pieceType]}.png`;
+		   img.alt = pieceType.charAt(0).toUpperCase() + pieceType.slice(1);
+		   pieceEl.appendChild(img);
+	    });
+	    
 	    document.getElementById('promotion-modal').style.display = 'flex';
-	}
+	 }
  
 	selectPromotion(type) {
 	    document.getElementById('promotion-modal').style.display = 'none';
@@ -927,11 +1068,13 @@ class ChessGame {
 	    const p = this.board[fromRow][fromCol];
 	    const cap = this.board[toRow][toCol];
 	    this.recordMove(p, fromRow, fromCol, toRow, toCol, cap, false, type);
-	    this.board[toRow][toCol]={type, color:p.color}; this.board[fromRow][fromCol]=null;
+	    this.board[toRow][toCol] = {type, color: p.color};
+	    this.board[fromRow][fromCol] = null;
 	    this.updateCastlingRights(p, fromRow, fromCol);
 	    this.finalizeMove(null, false);
 	    this.pendingPromotion = null;
-	}
+	    this.playSound('promote');
+	 }
  
 	// ========== GENERATE MASTER PGN ==========
 	generatePGN() {
@@ -946,7 +1089,7 @@ class ChessGame {
 		   const n = Math.floor(i/2) + 1;
 		   let w = this.moveHistory[i];
 		   let b = this.moveHistory[i+1];
- 
+	 
 		   const buildMoveString = (m) => {
 			  let txt = m.notation;
 			  if(m.nag) txt += ` ${m.nag}`;
@@ -955,13 +1098,34 @@ class ChessGame {
 			  }
 			  return txt;
 		   };
- 
+	 
 		   let s = `${n}. ${buildMoveString(w)}`;
 		   if (b) s += ` ${buildMoveString(b)}`;
 		   moves.push(s);
 	    }
 	    pgn += moves.join(' ') + ' ' + (this.pgnHeaders.Result || '*');
 	    return pgn;
+	 }
+	 
+	 // Add this new method to generate the filename
+	 // Replace the generatePGNFilename method with this improved version:
+	generatePGNFilename() {
+	const whiteName = this.pgnHeaders.White || 'White';
+	const blackName = this.pgnHeaders.Black || 'Black';
+	const date = this.pgnHeaders.Date || 'unknown_date';
+	
+	// Clean names for filename (remove special characters, keep spaces as underscores)
+	const cleanWhite = whiteName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
+	const cleanBlack = blackName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
+	const cleanDate = date.replace(/[^0-9.]/g, '_');
+	
+	// Default filename if using default names
+	if ((cleanWhite === 'White' && cleanBlack === 'Black') || 
+	    cleanWhite === '_' || cleanBlack === '_') {
+	    return 'chess_game.pgn';
+	}
+	
+	return `${cleanWhite}_vs_${cleanBlack}_${cleanDate}.pgn`;
 	}
  
 	showPgnModal() {
@@ -970,199 +1134,216 @@ class ChessGame {
 	}
  
 	attachEventListeners() {
-		document.getElementById('flip-board').addEventListener('click', () => {
-		    this.isFlipped = !this.isFlipped;
-		    this.updateDisplay();
-		    this.updateCoordinates();
+	    document.getElementById('flip-board').addEventListener('click', () => {
+		   this.isFlipped = !this.isFlipped;
+		   this.updateDisplay();
+		   this.updateCoordinates();
+	    });
+	    
+	    document.getElementById('new-game').addEventListener('click', () => this.setupGame());
+	    document.getElementById('generate-pgn').addEventListener('click', () => this.showPgnModal());
+	    document.getElementById('close-pgn').addEventListener('click', () => document.getElementById('pgn-modal').style.display='none');
+	    
+	    // Add undo/redo button listeners
+	    document.getElementById('undo-move').addEventListener('click', () => this.undoMove());
+	    document.getElementById('redo-move').addEventListener('click', () => this.redoMove());
+	    
+	    document.querySelectorAll('.anno-btn').forEach(btn => {
+		   btn.addEventListener('click', () => this.annotateLastMove(btn.dataset.type));
+	    });
+	    
+	    document.getElementById('copy-pgn').addEventListener('click', () => {
+		   const t = document.getElementById('pgn-text'); t.select(); navigator.clipboard.writeText(t.value);
+	    });
+	    
+	    document.getElementById('download-pgn').addEventListener('click', () => {
+		   const pgnContent = this.generatePGN();
+		   const filename = this.generatePGNFilename();
+		   const blob = new Blob([pgnContent], { type: 'text/plain' });
+		   const url = window.URL.createObjectURL(blob);
+		   const a = document.createElement('a');
+		   a.href = url; 
+		   a.download = filename; 
+		   a.click();
+		   window.URL.revokeObjectURL(url);
 		});
-		
-		document.getElementById('new-game').addEventListener('click', () => this.setupGame());
-		document.getElementById('generate-pgn').addEventListener('click', () => this.showPgnModal());
-		document.getElementById('close-pgn').addEventListener('click', () => document.getElementById('pgn-modal').style.display='none');
-		
-		// Add undo/redo button listeners
-		document.getElementById('undo-move').addEventListener('click', () => this.undoMove());
-		document.getElementById('redo-move').addEventListener('click', () => this.redoMove());
-		
-		document.querySelectorAll('.anno-btn').forEach(btn => {
-		    btn.addEventListener('click', () => this.annotateLastMove(btn.dataset.type));
-		});
-		
-		document.getElementById('copy-pgn').addEventListener('click', () => {
-		    const t = document.getElementById('pgn-text'); t.select(); navigator.clipboard.writeText(t.value);
-		});
-		
-		document.getElementById('download-pgn').addEventListener('click', () => {
-		    const blob = new Blob([this.generatePGN()], { type: 'text/plain' });
-		    const url = window.URL.createObjectURL(blob);
-		    const a = document.createElement('a');
-		    a.href = url; a.download = 'master_game.pgn'; a.click();
-		});
-		
-		document.querySelectorAll('.promotion-piece').forEach(btn => btn.addEventListener('click', () => this.selectPromotion(btn.dataset.piece)));
-		
-		document.addEventListener('keydown', (e) => {
-		    if(e.key==='ArrowLeft') { this.undoMove(); }
-		    if(e.key==='ArrowRight') { this.redoMove(); }
-		});
+	    
+	    document.querySelectorAll('.promotion-piece').forEach(btn => btn.addEventListener('click', () => this.selectPromotion(btn.dataset.piece)));
+	    
+	    document.addEventListener('keydown', (e) => {
+		   if(e.key==='ArrowLeft') { this.undoMove(); }
+		   if(e.key==='ArrowRight') { this.redoMove(); }
+	    });
 	 }
  
 	 // ========== UNDO/REDO ==========
 	 undoMove() { 
-		if(this.moveHistory.length === 0) return;
-		const m = this.moveHistory.pop();
-		this.redoStack.push(m);
+	    if(this.moveHistory.length === 0) return;
+	    const m = this.moveHistory.pop();
+	    this.redoStack.push(m);
 	  
-		// Play appropriate sound based on move type
-		this.playMoveSound(m, true);
+	    // Remove annotation from the square if it exists
+	    const annotationKey = `${m.to.row},${m.to.col}`;
+	    if (m.annotation && m.annotation !== 'None') {
+		   this.squareAnnotations.delete(annotationKey);
+	    }
 	  
-		// 1. Revert the piece to the starting square
-		this.board[m.from.row][m.from.col] = {type: m.piece, color: m.player};
-		
-		// 2. Handle Captures & En Passant
-		if(m.captured) {
-		    if(m.isEnPassant) {
-			   this.board[m.to.row][m.to.col] = null; // The destination is empty
-			   // Restore the captured pawn 'behind' the move
-			   this.board[m.from.row][m.to.col] = {type: 'pawn', color: m.player==='white'?'black':'white'};
-		    } else {
-			   // Normal capture restoration
-			   this.board[m.to.row][m.to.col] = {type: m.captured, color: m.player==='white'?'black':'white'};
-		    }
-		} else {
-		    this.board[m.to.row][m.to.col] = null;
-		}
+	    // Play appropriate sound based on move type
+	    this.playMoveSound(m, true);
 	  
-		// 3. Revert Castling (Move the Rook back)
-		if (m.piece === 'king' && Math.abs(m.from.col - m.to.col) > 1) {
-		    const row = m.from.row;
-		    const isKingside = m.to.col > m.from.col;
-		    const rookFrom = isKingside ? 7 : 0;
-		    const rookTo = isKingside ? 5 : 3;
-		    
-		    // Move rook from 'To' back to 'From'
-		    this.board[row][rookFrom] = this.board[row][rookTo];
-		    this.board[row][rookTo] = null;
-		}
+	    // 1. Revert the piece to the starting square
+	    this.board[m.from.row][m.from.col] = {type: m.piece, color: m.player};
+	    
+	    // 2. Handle Captures & En Passant
+	    if(m.captured) {
+		   if(m.isEnPassant) {
+			  this.board[m.to.row][m.to.col] = null; // The destination is empty
+			  // Restore the captured pawn 'behind' the move
+			  this.board[m.from.row][m.to.col] = {type: 'pawn', color: m.player==='white'?'black':'white'};
+		   } else {
+			  // Normal capture restoration
+			  this.board[m.to.row][m.to.col] = {type: m.captured, color: m.player==='white'?'black':'white'};
+		   }
+	    } else {
+		   this.board[m.to.row][m.to.col] = null;
+	    }
 	  
-		// 4. Restore State
-		this.castlingRights = m.prevCastling;
-		this.enPassantTarget = m.prevEP;
-		this.currentPlayer = m.player;
-		this.gameOver = false;
-		
-		this.updateDisplay(); 
-		this.updateMoveHistory();
+	    // 3. Revert Castling (Move the Rook back)
+	    if (m.piece === 'king' && Math.abs(m.from.col - m.to.col) > 1) {
+		   const row = m.from.row;
+		   const isKingside = m.to.col > m.from.col;
+		   const rookFrom = isKingside ? 7 : 0;
+		   const rookTo = isKingside ? 5 : 3;
+		   
+		   // Move rook from 'To' back to 'From'
+		   this.board[row][rookFrom] = this.board[row][rookTo];
+		   this.board[row][rookTo] = null;
+	    }
+	  
+	    // 4. Restore State
+	    this.castlingRights = m.prevCastling;
+	    this.enPassantTarget = m.prevEP;
+	    this.currentPlayer = m.player;
+	    this.gameOver = false;
+	    
+	    this.updateDisplay(); 
+	    this.updateMoveHistory();
 	  }
 	  
 	  redoMove() { 
-		if(this.redoStack.length === 0) return;
-		const m = this.redoStack.pop();
-		this.moveHistory.push(m);
+	    if(this.redoStack.length === 0) return;
+	    const m = this.redoStack.pop();
+	    this.moveHistory.push(m);
 	  
-		// Play appropriate sound based on move type
-		this.playMoveSound(m, false);
+	    // Restore annotation to the square if it exists
+	    if (m.annotation && m.annotation !== 'None') {
+		   const annotationKey = `${m.to.row},${m.to.col}`;
+		   this.squareAnnotations.set(annotationKey, m.annotation);
+	    }
 	  
-		// 1. Move the piece
-		this.board[m.to.row][m.to.col] = {type: m.piece, color: m.player};
-		this.board[m.from.row][m.from.col] = null;
+	    // Play appropriate sound based on move type
+	    this.playMoveSound(m, false);
 	  
-		// 2. Handle Castling Redo (Move Rook)
-		if (m.piece === 'king' && Math.abs(m.from.col - m.to.col) > 1) {
-		    const row = m.from.row;
-		    const isKingside = m.to.col > m.from.col;
-		    const rookFrom = isKingside ? 7 : 0;
-		    const rookTo = isKingside ? 5 : 3;
-		    
-		    this.board[row][rookTo] = this.board[row][rookFrom];
-		    this.board[row][rookFrom] = null;
-		}
+	    // 1. Move the piece
+	    this.board[m.to.row][m.to.col] = {type: m.piece, color: m.player};
+	    this.board[m.from.row][m.from.col] = null;
 	  
-		// 3. Handle En Passant Redo (Remove the captured pawn)
-		if (m.isEnPassant) {
-		    this.board[m.from.row][m.to.col] = null;
-		}
+	    // 2. Handle Castling Redo (Move Rook)
+	    if (m.piece === 'king' && Math.abs(m.from.col - m.to.col) > 1) {
+		   const row = m.from.row;
+		   const isKingside = m.to.col > m.from.col;
+		   const rookFrom = isKingside ? 7 : 0;
+		   const rookTo = isKingside ? 5 : 3;
+		   
+		   this.board[row][rookTo] = this.board[row][rookFrom];
+		   this.board[row][rookFrom] = null;
+	    }
 	  
-		// 4. Update State
-		const p = this.board[m.to.row][m.to.col];
-		this.updateCastlingRights(p, m.from.row, m.from.col);
-		
-		// Recalculate EP target
-		if (p.type === 'pawn' && Math.abs(m.from.row - m.to.row) === 2) {
-		    this.enPassantTarget = { row: (m.from.row + m.to.row) / 2, col: m.to.col };
-		} else {
-		    this.enPassantTarget = null;
-		}
+	    // 3. Handle En Passant Redo (Remove the captured pawn)
+	    if (m.isEnPassant) {
+		   this.board[m.from.row][m.to.col] = null;
+	    }
 	  
-		this.currentPlayer = m.player === 'white' ? 'black' : 'white';
-		this.updateDisplay(); 
-		this.updateMoveHistory();
+	    // 4. Update State
+	    const p = this.board[m.to.row][m.to.col];
+	    this.updateCastlingRights(p, m.from.row, m.from.col);
+	    
+	    // Recalculate EP target
+	    if (p.type === 'pawn' && Math.abs(m.from.row - m.to.row) === 2) {
+		   this.enPassantTarget = { row: (m.from.row + m.to.row) / 2, col: m.to.col };
+	    } else {
+		   this.enPassantTarget = null;
+	    }
+	  
+	    this.currentPlayer = m.player === 'white' ? 'black' : 'white';
+	    this.updateDisplay(); 
+	    this.updateMoveHistory();
 	  }
 	  // Add this method to check if a move resulted in check
 	  wasMoveCheck(move) {
-		 // Temporarily restore the board state to check if this move resulted in check
-		 const originalBoard = JSON.parse(JSON.stringify(this.board));
-		 const originalCurrentPlayer = this.currentPlayer;
-		 
-		 // Apply the move temporarily
-		 this.board[move.to.row][move.to.col] = {type: move.piece, color: move.player};
-		 this.board[move.from.row][move.from.col] = null;
-		 
-		 // Handle captures for en passant
-		 if (move.isEnPassant) {
-			this.board[move.from.row][move.to.col] = null;
-		 }
-		 
-		 // Handle castling - move the rook
-		 if (move.piece === 'king' && Math.abs(move.from.col - move.to.col) > 1) {
-			const row = move.from.row;
-			const isKingside = move.to.col > move.from.col;
-			const rookFrom = isKingside ? 7 : 0;
-			const rookTo = isKingside ? 5 : 3;
-			
-			this.board[row][rookTo] = this.board[row][rookFrom];
-			this.board[row][rookFrom] = null;
-		 }
-		 
-		 // Check if this move put the opponent in check
-		 const opponent = move.player === 'white' ? 'black' : 'white';
-		 const kingPos = this.findKing(opponent);
-		 const wasCheck = kingPos ? this.isSquareAttacked(kingPos.row, kingPos.col, move.player) : false;
-		 
-		 // Restore original state
-		 this.board = originalBoard;
-		 this.currentPlayer = originalCurrentPlayer;
-		 
-		 return wasCheck;
+		// Temporarily restore the board state to check if this move resulted in check
+		const originalBoard = JSON.parse(JSON.stringify(this.board));
+		const originalCurrentPlayer = this.currentPlayer;
+		
+		// Apply the move temporarily
+		this.board[move.to.row][move.to.col] = {type: move.piece, color: move.player};
+		this.board[move.from.row][move.from.col] = null;
+		
+		// Handle captures for en passant
+		if (move.isEnPassant) {
+		   this.board[move.from.row][move.to.col] = null;
+		}
+		
+		// Handle castling - move the rook
+		if (move.piece === 'king' && Math.abs(move.from.col - move.to.col) > 1) {
+		   const row = move.from.row;
+		   const isKingside = move.to.col > move.from.col;
+		   const rookFrom = isKingside ? 7 : 0;
+		   const rookTo = isKingside ? 5 : 3;
+		   
+		   this.board[row][rookTo] = this.board[row][rookFrom];
+		   this.board[row][rookFrom] = null;
+		}
+		
+		// Check if this move put the opponent in check
+		const opponent = move.player === 'white' ? 'black' : 'white';
+		const kingPos = this.findKing(opponent);
+		const wasCheck = kingPos ? this.isSquareAttacked(kingPos.row, kingPos.col, move.player) : false;
+		
+		// Restore original state
+		this.board = originalBoard;
+		this.currentPlayer = originalCurrentPlayer;
+		
+		return wasCheck;
 	  }
 	 // ========== SOUND HELPER FOR UNDO/REDO ==========
 	 playMoveSound(move, isUndo) {
-		const movedColor = move.player;
-		const opponentColor = movedColor === 'white' ? 'black' : 'white';
-		
-		let soundType = 'move'; // default
-		
-		if (move.piece === 'king' && Math.abs(move.from.col - move.to.col) > 1) {
-		    // Castling move
-		    soundType = 'castle';
-		} else if (move.captured || move.isEnPassant) {
-		    // Capture move (including en passant)
-		    soundType = 'capture';
-		} else if (move.promotion) {
-		    // Promotion move
-		    soundType = 'promote';
-		}
-		
-		// Check if this move resulted in check
-		if (this.wasMoveCheck(move)) {
-		    soundType = 'check';
-		}
-		
-		// For undo, we play the sound as if the opponent is making the reverse move
-		// For redo, we play the sound as the original player making the move
-		const colorToUse = isUndo ? opponentColor : movedColor;
-		
-		this.playSound(`${colorToUse}-${soundType}`);
+	    const movedColor = move.player;
+	    const opponentColor = movedColor === 'white' ? 'black' : 'white';
+	    
+	    let soundType = 'move'; // default
+	    
+	    if (move.piece === 'king' && Math.abs(move.from.col - move.to.col) > 1) {
+		   // Castling move
+		   soundType = 'castle';
+	    } else if (move.captured || move.isEnPassant) {
+		   // Capture move (including en passant)
+		   soundType = 'capture';
+	    } else if (move.promotion) {
+		   // Promotion move
+		   soundType = 'promote';
+	    }
+	    
+	    // Check if this move resulted in check
+	    if (this.wasMoveCheck(move)) {
+		   soundType = 'check';
+	    }
+	    
+	    // For undo, we play the sound as if the opponent is making the reverse move
+	    // For redo, we play the sound as the original player making the move
+	    const colorToUse = isUndo ? opponentColor : movedColor;
+	    
+	    this.playSound(`${colorToUse}-${soundType}`);
 	 }
  
 	drawArrows() {

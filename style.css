@@ -148,47 +148,6 @@ input:focus, select:focus {
 }
 
 /* Avatar URL Prefix Style */
-/* Avatar URL Prefix Style */
-.url-prefix-container {
-    display: flex;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid var(--card-border);
-    border-radius: 6px;
-    overflow: hidden;
-    transition: var(--transition);
-    width: 100%; /* Ensure it takes full width */
-}
-
-.url-prefix-container:focus-within {
-    border-color: var(--primary-red);
-}
-
-.url-prefix {
-    background: rgba(255,255,255,0.1);
-    color: var(--text-muted);
-    font-size: 0.7rem; /* Slightly smaller font */
-    padding: 8px 8px; /* Reduced padding */
-    white-space: nowrap;
-    user-select: none;
-    border-right: 1px solid rgba(255,255,255,0.1);
-    opacity: 0.7;
-    flex-shrink: 0; /* Prevent shrinking */
-    max-width: 60%; /* Limit prefix width */
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.url-prefix-container input {
-    border: none;
-    background: transparent;
-    padding: 8px 12px;
-    flex: 1; /* Take remaining space */
-    min-width: 80px; /* Ensure minimum space for typing */
-    width: auto; /* Allow flexible width */
-}
-
-/* URL Input with grayed placeholder hint */
 .url-input-with-hint::placeholder {
     color: var(--text-muted);
     opacity: 0.7;
@@ -421,6 +380,28 @@ input:focus, select:focus {
 .right-click-highlight { 
     background-color: rgba(155, 199, 0, 0.6) !important; 
     box-shadow: inset 0 0 0 3px rgba(155, 199, 0, 0.8);
+}
+
+/* Notation Icons */
+/* Notation Icons at Intersections */
+.notation-icon-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 25;
+}
+
+.notation-icon {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+    z-index: 26;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.7));
+    transform: translate(-50%, -50%);
 }
 
 .square img { 
@@ -862,8 +843,23 @@ input:focus, select:focus {
     }
     
     .promotion-piece {
-        width: 60px;
-        height: 60px;
+        width: 70px;
+        height: 70px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(76, 201, 240, 0.6);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .promotion-piece img {
+        width: 85%;
+        height: 85%;
+        object-fit: contain;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
     }
 }
 
