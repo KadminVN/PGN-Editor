@@ -108,8 +108,61 @@ class ChessGame {
 		setTimeout(() => this.playSound('start'), 500);
 	 }
  
+	loadCountryData() {
+	    fetch('country_code.txt')
+		   .then(response => response.text())
+		   .then(text => {
+			  const countries = this.parseCountryData(text);
+			  this.populateCountrySelects(countries);
+		   })
+		   .catch(error => {
+			  console.error('Error loading country data:', error);
+		   });
+	}
+ 
+	parseCountryData(text) {
+	    const lines = text.split('\n');
+	    const countries = [];
+	    for(const line of lines) {
+		   const match = line.match(/^(\d+)\.(.+)$/);
+		   if(match) {
+			  const code = parseInt(match[1]);
+			  const name = match[2].trim();
+			  countries.push({code, name});
+		   }
+	    }
+	    return countries.sort((a, b) => a.code - b.code);
+	}
+ 
+	populateCountrySelects(countries) {
+	    ['white-country', 'black-country'].forEach(id => {
+		   const select = document.getElementById(id);
+		   if(select) {
+			  // Clear existing options except the first one
+			  select.innerHTML = '<option value="">Select Country</option>';
+			  
+			  countries.forEach(country => {
+				 const option = document.createElement('option');
+				 option.value = country.code;
+				 option.textContent = country.name;
+				 select.appendChild(option);
+			  });
+			  
+			  // Set current value if it exists
+			  const color = id.split('-')[0];
+			  const headerKey = color.charAt(0).toUpperCase() + color.slice(1) + 'Country';
+			  if(this.pgnHeaders[headerKey]) {
+				 select.value = this.pgnHeaders[headerKey];
+			  }
+		   }
+	    });
+	}
+ 
 	// ========== INPUT & SETTINGS ==========
 	initInputs() {
+	    // Load country data
+	    this.loadCountryData();
+	    
 	    if(document.getElementById('date-dd')) {
 		   const [yyyy, mm, dd] = this.pgnHeaders.Date.split('.');
 		   document.getElementById('date-dd').value = dd;

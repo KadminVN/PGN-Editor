@@ -147,6 +147,11 @@ input:focus, select:focus {
     width: 85px; 
 }
 
+.country-select {
+    width: 140px;
+    max-width: 140px;
+}
+
 /* Avatar URL Prefix Style */
 .url-input-with-hint::placeholder {
     color: var(--text-muted);
