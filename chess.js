@@ -131,7 +131,7 @@ class ChessGame {
 			  countries.push({code, name});
 		   }
 	    }
-	    return countries.sort((a, b) => a.code - b.code);
+	    return countries.sort((a, b) => a.name.localeCompare(b.name));
 	}
  
 	populateCountrySelects(countries) {
