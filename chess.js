@@ -934,6 +934,29 @@ class ChessGame {
 		   if(promo) not += '='+promo.charAt(0).toUpperCase();
 	    }
 	    
+	    // Add disambiguation for pieces (except pawns)
+	    if(p.type !== 'pawn' && p.type !== 'king') {
+		   const ambiguities = this.findAmbiguousPieces(p.type, p.color, tr, tc, fr, fc);
+		   if(ambiguities.length > 0) {
+			  // Check if file disambiguates
+			  const sameFileAmbiguities = ambiguities.filter(pos => pos.col === fc);
+			  if(sameFileAmbiguities.length === 0) {
+				 // File disambiguates
+				 not = not.slice(0, 1) + file + not.slice(1);
+			  } else {
+				 // Check if rank disambiguates
+				 const sameRankAmbiguities = ambiguities.filter(pos => pos.row === fr);
+				 if(sameRankAmbiguities.length === 0) {
+					// Rank disambiguates
+					not = not.slice(0, 1) + rank + not.slice(1);
+				 } else {
+					// Need both file and rank
+					not = not.slice(0, 1) + file + rank + not.slice(1);
+				 }
+			  }
+		   }
+	    }
+	    
 	    this.moveHistory.push({
 		   notation: not, player: p.color,
 		   from: {row:fr, col:fc}, to: {row:tr, col:tc},
@@ -1006,6 +1029,23 @@ class ChessGame {
 	 }
  
 	isInBounds(r,c){ return r>=0 && r<8 && c>=0 && c<8; }
+	
+	findAmbiguousPieces(pieceType, color, destRow, destCol, excludeRow, excludeCol) {
+	    const ambiguous = [];
+	    for(let r = 0; r < 8; r++) {
+		   for(let c = 0; c < 8; c++) {
+			  if(r === excludeRow && c === excludeCol) continue; // Skip the piece that's actually moving
+			  const p = this.board[r][c];
+			  if(p && p.type === pieceType && p.color === color) {
+				 const moves = this.calculateValidMoves(r, c);
+				 if(moves.some(move => move.row === destRow && move.col === destCol)) {
+					ambiguous.push({row: r, col: c});
+				 }
+			  }
+		   }
+	    }
+	    return ambiguous;
+	}
 	
 	findKing(c) { 
 	    for(let r=0;r<8;r++) {

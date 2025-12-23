@@ -1,0 +1,203 @@
+Countries code for chess.com
+2.United States
+3.Canada
+4.Argentina
+5.Belgium
+9.Afghanistan
+10.Albania
+11.Andorra
+12.Anguilla
+13.Antigua & Barbuda	
+14.Armenia
+15.Aruba
+17.Australia
+18.Austria
+19.Bahamas
+20.Bahrain
+21.Barbados
+22.Belarus
+23.Belize
+24.Bermuda
+25.Bolivia
+26.Bosnia & Herzegovina
+27.Brazil
+28.Bulgaria
+29.Canary Islands
+30.Cayman Islands
+32.Chile
+33.China
+34.Colombia
+35.Costa Rica
+36.Croatia
+37.Cuba
+38.Curaçao
+39.Cyprus
+40.Czech Republic
+41.Denmark
+42.Dominica
+43.Dominican Republic
+44.Ecuador
+45.Egypt
+46.El Savador
+47.Estonia
+48.Falkland Islands
+49.Faroe Islands
+50.Fiji
+51.Finland
+52.France
+53.Georgia
+54.Germany
+55.Gibraltar
+56.Greece
+57.Greenland
+58.Grenada
+59.Guadeloupe
+60.Guam
+61.Guatemala
+62.Guernsey
+63.Guyana
+64.Haiti
+65.Honduras
+66.Hong Kong SAR China
+67.Hungary
+68.Iceland
+69.India
+70.Indonesia
+71.Iran
+72.Iraq
+73.Ireland
+74.Isle of Man
+75.Isarel
+76.Italy
+77.Jamaica
+78.Japan
+79.Jersey
+80.Jordan
+81.Kazakhstan
+82.Kiribati
+84.Kuwait
+85.Latvia
+86.Lebanon
+87.Liechtenstein
+88.Lithuania
+89.Luxembourg
+90.Macao SAR China
+91.North Macedonia
+92.Malaysia
+93.Malta
+94.Martinique
+95.Mexico
+96.Moldova
+97.Monaco
+98.Montserrat
+99.Nauru
+100.Nepal
+101.Netherlands
+102.New Zealand
+103.Nicaragua
+104.Norway
+105.Oman
+106.Pakistan
+107.Panama
+108.Papua New Guinea
+109.Paraguay
+110.Peru
+111.Philippines
+112.Poland
+113.Portugal
+114.Puerto Rico
+115.Romania
+116.Russia
+118.St. Kitts & Nevis
+119.St. Lucia
+120.St. Pierre & Miquelon
+122.San Marino
+123.Saudi Arabia
+125.Singapore
+126.Slovakia
+127.Slovenia
+128.Solomon Islands
+129.South Africa
+130.South Georgia
+131.Suriname
+132.Sweden
+133.Switzerland
+134.Taiwan
+135.Thailand
+136.Tonga
+137.Trinidad & Tobago
+138.Turkey
+139.Turkmenistan
+140.Tuvalu
+141.Ukraine
+142.United Arab Emirates
+143.Uruguay
+145.Uzbekistan
+146.Vanuatu
+147.Vatican City
+148.Venezuela
+149.Vietnam
+151.Yemen
+153.American Samoa
+154.St. Vincent & Grenadines
+156.Azerbaijan
+157.Mongolia
+158.Syria
+159.England
+160.Marshall Islands
+162.Scotland
+163.Spain
+164.United Kingdom
+165.U.S. Virgin Islands
+166.Wales
+
+175.South Korea
+176.Kyrgyzstan
+177.Bangladesh
+178.Sudan
+179.Benin
+180.Bhutan
+181.Botswana
+182.Brunei
+183.Burundi
+184.Cambodia
+185.Cameroon
+186.Cape Verde
+187.Central African Republic
+188.Chad
+189.Congo-Brazzaville
+190.Côte d'Ivoire
+191.Djibouti
+192.Equatorial Guinea
+193.Gabon
+194.Ghana
+195.Kenya
+196.Laos
+197.Liberia
+198.Magadasca
+199.Morocco
+200.Mozambique
+201.Myanmar (Burma)
+202.Namibia
+203.Niger
+204.Nigeria
+206.Qatar
+207.Rwanda
+208.Samoa
+209.São Tomé & Príncipe
+210.Senegal
+211.Sierra Leone
+212.Somalia
+213.Sri Lanka
+214.Eswatini
+215.Tajikistan
+216.Tanzania
+217.Timor-Leste
+218.Togo
+219.Tunisia
+220.Uganda
+221.Zambia
+222.Zimbabwe
+223.Algeria
+224.Mauritania
+225.International
