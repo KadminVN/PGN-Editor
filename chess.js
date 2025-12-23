@@ -245,7 +245,16 @@ class ChessGame {
 		   const eloEl = document.getElementById(`disp-${color}-elo`);
 		   if(eloEl) eloEl.textContent = elo ? `(${elo})` : '';
 		   const flagEl = document.getElementById(`disp-${color}-flag`);
-		   if(flagEl) flagEl.textContent = flag ? ` 🏳️${flag}` : '';
+		   if(flagEl) {
+			  if(flag) {
+				 flagEl.innerHTML = `<img src="https://images.chesscomfiles.com/uploads/v1/flags/${flag}.png" 
+										alt="${flag}" 
+										onerror="this.style.display='none'"
+										style="width: 20px; height: 15px; vertical-align: middle; margin-left: 5px; border-radius: 2px;">`;
+			  } else {
+				 flagEl.innerHTML = '';
+			  }
+		   }
 	 
 		   const url = this.pgnHeaders[`${cap}Url`];
 		   const imgEl = document.getElementById(`img-${color}`);
